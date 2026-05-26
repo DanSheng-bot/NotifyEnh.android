@@ -11,12 +11,42 @@ import kotlinx.coroutines.launch
 
 class NotifyEnhService: NotificationListenerService() {
 
+    companion object {
+        var isServiceRunning = false
+            private set
+        
+        private var instance: NotifyEnhService? = null
+
+        fun stopService() {
+            instance?.requestUnbind()
+            isServiceRunning = false
+        }
+    }
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var database: AppDatabase
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        isServiceRunning = true
+        instance = this
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        isServiceRunning = false
+        instance = null
+    }
 
     override fun onCreate() {
         super.onCreate()
         database = AppDatabase.getDatabase(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        isServiceRunning = false
+        instance = null
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
