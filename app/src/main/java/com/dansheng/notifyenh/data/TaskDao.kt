@@ -16,6 +16,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isEnabled = 1")
     suspend fun getEnabledTasks(): List<TaskEntity>
 
+    @Query("SELECT * FROM tasks WHERE isEnabled = 1 AND (packageName = :pkgName OR packageName IS NULL OR packageName = '')")
+    suspend fun getEnabledTasksForPackage(pkgName: String): List<TaskEntity>
+
     @Query("SELECT * FROM tasks")
     suspend fun getAllTasksList(): List<TaskEntity>
 

@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.NotificationEntity
@@ -80,7 +81,13 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("搜索通知标题、内容或应用") },
+                placeholder = { 
+                    Text(
+                        "搜索通知标题、内容或应用", 
+                        maxLines = 1, 
+                        overflow = TextOverflow.Ellipsis
+                    ) 
+                },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {

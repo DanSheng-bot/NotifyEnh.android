@@ -204,19 +204,11 @@ fun TaskItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = task.name, style = MaterialTheme.typography.titleMedium)
-                if (!task.packageName.isNullOrBlank()) {
-                    Text(
-                        text = "应用: ${task.packageName}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
                 Text(
                     text = "${if (task.isRegex) "正则" else "关键词"}: ${
                         listOfNotNull(
                             task.titlePattern?.let { "标题($it)" },
-                            task.contentPattern?.let { "内容($it)" },
-                            task.pattern.takeIf { it.isNotBlank() }?.let { "通用($it)" }
+                            task.contentPattern?.let { "内容($it)" }
                         ).joinToString(" & ")
                     }",
                     style = MaterialTheme.typography.bodySmall
@@ -259,7 +251,6 @@ fun TaskEditDialog(
     var packageName by remember { mutableStateOf(task?.packageName ?: "") }
     var titlePattern by remember { mutableStateOf(task?.titlePattern ?: "") }
     var contentPattern by remember { mutableStateOf(task?.contentPattern ?: "") }
-    var pattern by remember { mutableStateOf(task?.pattern ?: "") }
     var isRegex by remember { mutableStateOf(task?.isRegex ?: false) }
     var actionCancel by remember { mutableStateOf(task?.actionCancel ?: false) }
     var actionTts by remember { mutableStateOf(task?.actionTts ?: false) }
@@ -322,15 +313,6 @@ fun TaskEditDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                if (pattern.isNotBlank()) {
-                    OutlinedTextField(
-                        value = pattern,
-                        onValueChange = { pattern = it },
-                        label = { Text("通用匹配模式 (旧版)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = false
-                    )
-                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = isRegex, onCheckedChange = { isRegex = it })
                     Text("使用正则表达式")
@@ -356,7 +338,6 @@ fun TaskEditDialog(
                             packageName = if (packageName.isBlank()) null else packageName,
                             titlePattern = if (titlePattern.isBlank()) null else titlePattern,
                             contentPattern = if (contentPattern.isBlank()) null else contentPattern,
-                            pattern = pattern,
                             isRegex = isRegex,
                             actionCancel = actionCancel,
                             actionTts = actionTts,
@@ -364,7 +345,7 @@ fun TaskEditDialog(
                         )
                     )
                 },
-                enabled = name.isNotBlank() && (titlePattern.isNotBlank() || contentPattern.isNotBlank() || pattern.isNotBlank())
+                enabled = name.isNotBlank() && (titlePattern.isNotBlank() || contentPattern.isNotBlank())
             ) {
                 Text("确定")
             }
