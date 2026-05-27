@@ -1,4 +1,3 @@
-import java.util.Properties
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
