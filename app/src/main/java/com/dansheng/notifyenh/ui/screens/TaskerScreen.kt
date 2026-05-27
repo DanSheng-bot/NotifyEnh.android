@@ -20,6 +20,8 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -59,6 +61,14 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
     
     var showAddDialog by remember { mutableStateOf(false) }
     var taskToEdit by remember { mutableStateOf<TaskEntity?>(null) }
+    
+    val groupedTasks = remember(tasks) {
+        tasks.groupBy { it.packageName ?: "通用" }
+    }
+    
+    var expandedPackage by remember(groupedTasks) {
+        mutableStateOf(groupedTasks.keys.firstOrNull())
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -96,21 +106,57 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(tasks, key = { it.id }) { task ->
-                    TaskItem(
-                        task = task,
-                        onEdit = { taskToEdit = it },
-                        onToggle = { enabled ->
-                            scope.launch {
-                                database.taskDao().update(task.copy(isEnabled = enabled))
-                            }
-                        },
-                        onDelete = {
-                            scope.launch {
-                                database.taskDao().delete(task)
+                groupedTasks.forEach { (packageName, tasksInGroup) ->
+                    val isExpanded = expandedPackage == packageName
+                    
+                    item(key = "header_$packageName") {
+                        Card(
+                            onClick = {
+                                expandedPackage = if (isExpanded) null else packageName
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = packageName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = if (isExpanded) "折叠" else "展开"
+                                )
                             }
                         }
-                    )
+                    }
+
+                    if (isExpanded) {
+                        items(tasksInGroup, key = { it.id }) { task ->
+                            TaskItem(
+                                task = task,
+                                onEdit = { taskToEdit = it },
+                                onToggle = { enabled ->
+                                    scope.launch {
+                                        database.taskDao().update(task.copy(isEnabled = enabled))
+                                    }
+                                },
+                                onDelete = {
+                                    scope.launch {
+                                        database.taskDao().delete(task)
+                                    }
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
