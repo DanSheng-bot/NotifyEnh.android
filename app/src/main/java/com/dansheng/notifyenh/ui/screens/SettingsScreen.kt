@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -22,7 +23,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -56,9 +56,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val appPreferences = remember { AppPreferences(context) }
 
     val themeMode by appPreferences.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
+    val persistentMode by appPreferences.persistentModeFlow.collectAsState(initial = false)
     val retentionDays by appPreferences.retentionDaysFlow.collectAsState(initial = 7)
     var isPermissionGranted by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
     var isServiceRunning by remember { mutableStateOf(NotifyEnhService.isServiceRunning) }
+    var isIgnoringBattery by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -66,6 +68,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             if (event == Lifecycle.Event.ON_RESUME) {
                 isPermissionGranted = isNotificationServiceEnabled(context)
                 isServiceRunning = NotifyEnhService.isServiceRunning
+                isIgnoringBattery = isIgnoringBatteryOptimizations(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -165,6 +168,61 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     )
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text(
+                text = "稳定性设置 (保活)",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            ListItem(
+                headlineContent = { Text("常驻后台 (前台服务)") },
+                supportingContent = { Text("在状态栏显示通知，防止系统回收服务") },
+                trailingContent = {
+                    Switch(
+                        checked = persistentMode,
+                        onCheckedChange = { enabled ->
+                            scope.launch {
+                                appPreferences.setPersistentMode(enabled)
+                                // 提示用户重启服务或自动处理
+                                Toast.makeText(
+                                    context,
+                                    "设置已保存，重启服务后生效",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    )
+                },
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+
+            ListItem(
+                headlineContent = { Text("忽略电池优化") },
+                supportingContent = {
+                    Text(if (isIgnoringBattery) "已忽略" else "未忽略，点击去设置")
+                },
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable {
+                        if (!isIgnoringBattery) {
+                            try {
+                                val intent =
+                                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                        data = Uri.parse("package:${context.packageName}")
+                                    }
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                val intent =
+                                    Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                context.startActivity(intent)
+                            }
+                        }
+                    }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -294,6 +352,11 @@ fun isNotificationServiceEnabled(context: Context): Boolean {
         }
     }
     return false
+}
+
+fun isIgnoringBatteryOptimizations(context: Context): Boolean {
+    val powerManager = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+    return powerManager.isIgnoringBatteryOptimizations(context.packageName)
 }
 
 @Composable

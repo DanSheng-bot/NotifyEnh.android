@@ -3,6 +3,7 @@ package com.dansheng.notifyenh.data.prefs
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -19,6 +20,7 @@ enum class ThemeMode {
 class AppPreferences(private val context: Context) {
     companion object {
         val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+        val PERSISTENT_MODE_KEY = booleanPreferencesKey("persistent_mode")
         val RETENTION_DAYS_KEY = intPreferencesKey("retention_days")
     }
 
@@ -26,6 +28,11 @@ class AppPreferences(private val context: Context) {
         .map { preferences ->
             val modeName = preferences[THEME_MODE_KEY] ?: ThemeMode.SYSTEM.name
             ThemeMode.valueOf(modeName)
+        }
+
+    val persistentModeFlow: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[PERSISTENT_MODE_KEY] ?: false
         }
 
     val retentionDaysFlow: Flow<Int> = context.dataStore.data
@@ -36,6 +43,12 @@ class AppPreferences(private val context: Context) {
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { preferences ->
             preferences[THEME_MODE_KEY] = mode.name
+        }
+    }
+
+    suspend fun setPersistentMode(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PERSISTENT_MODE_KEY] = enabled
         }
     }
 

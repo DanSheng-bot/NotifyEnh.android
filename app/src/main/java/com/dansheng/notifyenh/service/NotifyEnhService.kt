@@ -1,9 +1,16 @@
 package com.dansheng.notifyenh.service
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.NotificationEntity
 import com.dansheng.notifyenh.data.TaskEntity
@@ -19,6 +26,9 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
 
     companion object {
         private const val TAG = "NotifyEnhService"
+        private const val CHANNEL_ID = "notify_enh_service_channel"
+        private const val NOTIFICATION_ID = 1001
+
         var isServiceRunning = false
             private set
 
@@ -41,6 +51,13 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         isServiceRunning = true
         instance = this
         Log.d(TAG, "Service connected")
+
+        // 检查是否需要开启前台服务
+        serviceScope.launch {
+            if (appPreferences.persistentModeFlow.first()) {
+                startForegroundService()
+            }
+        }
     }
 
     override fun onListenerDisconnected() {
@@ -61,6 +78,41 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         if (status == TextToSpeech.SUCCESS) {
             tts?.language = Locale.getDefault()
             isTtsInitialized = true
+        }
+    }
+
+    private fun startForegroundService() {
+        createNotificationChannel()
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("NotifyEnh 正在运行")
+            .setContentText("监听通知中...")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "服务运行通知",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "确保应用在后台稳定运行"
+            }
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
         }
     }
 
