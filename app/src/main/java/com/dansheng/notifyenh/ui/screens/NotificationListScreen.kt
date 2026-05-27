@@ -82,27 +82,40 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
             shape = RoundedCornerShape(12.dp)
         )
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                bottom = 16.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(notifications, key = { it.id }) { notification ->
-                NotificationItem(
-                    notification = notification,
-                    onDelete = {
-                        scope.launch {
-                            database.notificationDao().delete(notification)
-                        }
-                    },
-                    onCreateTask = {
-                        notificationToTask = it
-                    }
+        if (notifications.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (searchQuery.isEmpty()) "暂无通知记录" else "未找到相关通知",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline
                 )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 16.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(notifications, key = { it.id }) { notification ->
+                    NotificationItem(
+                        notification = notification,
+                        onDelete = {
+                            scope.launch {
+                                database.notificationDao().delete(notification)
+                            }
+                        },
+                        onCreateTask = {
+                            notificationToTask = it
+                        }
+                    )
+                }
             }
         }
     }

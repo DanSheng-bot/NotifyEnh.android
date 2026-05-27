@@ -73,28 +73,43 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
             }
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(tasks, key = { it.id }) { task ->
-                TaskItem(
-                    task = task,
-                    onEdit = { taskToEdit = it },
-                    onToggle = { enabled ->
-                        scope.launch {
-                            database.taskDao().update(task.copy(isEnabled = enabled))
-                        }
-                    },
-                    onDelete = {
-                        scope.launch {
-                            database.taskDao().delete(task)
-                        }
-                    }
+        if (tasks.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "暂无任务",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.outline
                 )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(tasks, key = { it.id }) { task ->
+                    TaskItem(
+                        task = task,
+                        onEdit = { taskToEdit = it },
+                        onToggle = { enabled ->
+                            scope.launch {
+                                database.taskDao().update(task.copy(isEnabled = enabled))
+                            }
+                        },
+                        onDelete = {
+                            scope.launch {
+                                database.taskDao().delete(task)
+                            }
+                        }
+                    )
+                }
             }
         }
     }
