@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -126,8 +127,21 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
+                                val context = LocalContext.current
+                                val appName = remember(packageName) {
+                                    if (packageName == "通用") null
+                                    else {
+                                        try {
+                                            val pm = context.packageManager
+                                            val info = pm.getApplicationInfo(packageName, 0)
+                                            pm.getApplicationLabel(info).toString()
+                                        } catch (e: Exception) {
+                                            null
+                                        }
+                                    }
+                                }
                                 Text(
-                                    text = packageName,
+                                    text = if (appName != null) "$appName ($packageName)" else packageName,
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
@@ -364,25 +378,58 @@ fun AppPickerLoader(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val apps = remember {
+    var searchQuery by remember { mutableStateOf("") }
+
+    val allApps = remember {
         val pm = context.packageManager
         pm.getInstalledApplications(PackageManager.GET_META_DATA)
             .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 || (it.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0 }
             .sortedBy { it.loadLabel(pm).toString().lowercase() }
     }
 
+    val filteredApps = remember(searchQuery) {
+        if (searchQuery.isBlank()) {
+            allApps
+        } else {
+            val pm = context.packageManager
+            allApps.filter {
+                it.loadLabel(pm).toString().contains(searchQuery, ignoreCase = true) ||
+                        it.packageName.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("选择应用") },
         text = {
-            LazyColumn(modifier = Modifier.height(400.dp)) {
-                items(apps) { app ->
-                    val pm = context.packageManager
-                    ListItem(
-                        headlineContent = { Text(app.loadLabel(pm).toString()) },
-                        supportingContent = { Text(app.packageName) },
-                        modifier = Modifier.clickable { onAppSelected(app.packageName) }
-                    )
+            Column {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("搜索应用名或包名") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Clear, contentDescription = "清除")
+                            }
+                        }
+                    },
+                    singleLine = true
+                )
+
+                LazyColumn(modifier = Modifier.height(400.dp)) {
+                    items(filteredApps) { app ->
+                        val pm = context.packageManager
+                        ListItem(
+                            headlineContent = { Text(app.loadLabel(pm).toString()) },
+                            supportingContent = { Text(app.packageName) },
+                            modifier = Modifier.clickable { onAppSelected(app.packageName) }
+                        )
+                    }
                 }
             }
         },
