@@ -1,8 +1,26 @@
+import java.util.Properties
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
+}
+
+fun getGitCommitCount(): Int {
+    val process = ProcessBuilder("git", "rev-list", "--count", "HEAD").start()
+    return try {
+        process.inputStream.bufferedReader().readLine()?.trim()?.toInt() ?: 1
+    } catch (e: Exception) {
+        1
+    }
+}
+
+fun getVersionName(): String {
+    return SimpleDateFormat("yy.MM.dd", Locale.getDefault()).format(Date())
 }
 
 android {
@@ -17,8 +35,8 @@ android {
         applicationId = "com.dansheng.notifyenh"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = getGitCommitCount()
+        versionName = getVersionName()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,12 +50,23 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
         compose = true
+    }
+}
+
+@Suppress("UnstableApiUsage")
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val name = "NotifyEnh_v${android.defaultConfig.versionName}_${variant.name}.apk"
+            output.outputFileName.set(name)
+        }
     }
 }
 

@@ -19,6 +19,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -34,8 +36,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.TaskEntity
+import com.dansheng.notifyenh.data.prefs.AppPreferences
 import com.dansheng.notifyenh.data.prefs.ThemeMode
-import com.dansheng.notifyenh.data.prefs.ThemePreferences
 import com.dansheng.notifyenh.service.NotifyEnhService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,9 +51,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val database = remember { AppDatabase.getDatabase(context) }
-    val themePreferences = remember { ThemePreferences(context) }
+    val appPreferences = remember { AppPreferences(context) }
 
-    val themeMode by themePreferences.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
+    val themeMode by appPreferences.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
+    val retentionDays by appPreferences.retentionDaysFlow.collectAsState(initial = 7)
     var isPermissionGranted by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
     var isServiceRunning by remember { mutableStateOf(NotifyEnhService.isServiceRunning) }
 
@@ -167,18 +170,67 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         ThemeOption(
             title = "跟随系统",
             selected = themeMode == ThemeMode.SYSTEM,
-            onClick = { scope.launch { themePreferences.setThemeMode(ThemeMode.SYSTEM) } }
+            onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.SYSTEM) } }
         )
         ThemeOption(
             title = "浅色模式",
             selected = themeMode == ThemeMode.LIGHT,
-            onClick = { scope.launch { themePreferences.setThemeMode(ThemeMode.LIGHT) } }
+            onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.LIGHT) } }
         )
         ThemeOption(
             title = "深色模式",
             selected = themeMode == ThemeMode.DARK,
-            onClick = { scope.launch { themePreferences.setThemeMode(ThemeMode.DARK) } }
+            onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.DARK) } }
         )
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        Text(
+            text = "存储设置",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        var showRetentionDialog by remember { mutableStateOf(false) }
+        ListItem(
+            headlineContent = { Text("记录保留时间") },
+            supportingContent = { Text("当前：${retentionDays}天") },
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+                .clickable { showRetentionDialog = true }
+        )
+
+        if (showRetentionDialog) {
+            val options = listOf(1, 3, 7, 30)
+            AlertDialog(
+                onDismissRequest = { showRetentionDialog = false },
+                title = { Text("选择保留时间") },
+                text = {
+                    Column {
+                        options.forEach { days ->
+                            ListItem(
+                                headlineContent = { Text("${days}天") },
+                                trailingContent = {
+                                    RadioButton(selected = retentionDays == days, onClick = null)
+                                },
+                                modifier = Modifier.clickable {
+                                    scope.launch {
+                                        appPreferences.setRetentionDays(days)
+                                        showRetentionDialog = false
+                                    }
+                                }
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showRetentionDialog = false }) {
+                        Text("关闭")
+                    }
+                }
+            )
+        }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 

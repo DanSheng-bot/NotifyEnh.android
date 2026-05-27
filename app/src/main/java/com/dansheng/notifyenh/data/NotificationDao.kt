@@ -18,4 +18,7 @@ interface NotificationDao {
 
     @Query("SELECT * FROM notifications WHERE title LIKE '%' || :searchQuery || '%' OR content LIKE '%' || :searchQuery || '%' OR packageName LIKE '%' || :searchQuery || '%' ORDER BY postTime DESC")
     fun searchNotifications(searchQuery: String): kotlinx.coroutines.flow.Flow<List<NotificationEntity>>
+
+    @Query("DELETE FROM notifications WHERE postTime < :timestamp")
+    suspend fun deleteOldNotifications(timestamp: Long)
 }

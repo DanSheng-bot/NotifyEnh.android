@@ -7,9 +7,11 @@ import android.util.Log
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.NotificationEntity
 import com.dansheng.notifyenh.data.TaskEntity
+import com.dansheng.notifyenh.data.prefs.AppPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -30,6 +32,7 @@ class NotifyEnhService: NotificationListenerService(), TextToSpeech.OnInitListen
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var database: AppDatabase
+    private lateinit var appPreferences: AppPreferences
     private var tts: TextToSpeech? = null
     private var isTtsInitialized = false
 
@@ -50,6 +53,7 @@ class NotifyEnhService: NotificationListenerService(), TextToSpeech.OnInitListen
     override fun onCreate() {
         super.onCreate()
         database = AppDatabase.getDatabase(this)
+        appPreferences = AppPreferences(this)
         tts = TextToSpeech(this, this)
     }
 
@@ -80,8 +84,21 @@ class NotifyEnhService: NotificationListenerService(), TextToSpeech.OnInitListen
             )
             database.notificationDao().insert(entity)
             
+            // 清理旧通知
+            cleanupOldNotifications()
+
             // 处理任务
             processTasks(sbn, title, content)
+        }
+    }
+
+    private suspend fun cleanupOldNotifications() {
+        try {
+            val days = appPreferences.retentionDaysFlow.first()
+            val cutoff = System.currentTimeMillis() - (days * 24L * 60L * 60L * 1000L)
+            database.notificationDao().deleteOldNotifications(cutoff)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to cleanup old notifications", e)
         }
     }
 
