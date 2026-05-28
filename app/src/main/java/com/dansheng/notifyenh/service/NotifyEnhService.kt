@@ -3,6 +3,7 @@ package com.dansheng.notifyenh.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -71,6 +72,9 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         _isServiceRunning.value = false
         instance = null
         Log.d(TAG, "Service disconnected")
+
+        // 尝试重新绑定服务
+        requestRebind(ComponentName(this, NotifyEnhService::class.java))
     }
 
     override fun onCreate() {
