@@ -65,10 +65,14 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
     
     val groupedTasks = remember(tasks) {
         tasks.groupBy { it.packageName ?: "通用" }
+            .toList()
+            .sortedWith(compareBy { (packageName, _) ->
+                if (packageName == "通用") "" else packageName
+            })
     }
     
     var expandedPackage by remember(groupedTasks) {
-        mutableStateOf(groupedTasks.keys.firstOrNull())
+        mutableStateOf(groupedTasks.firstOrNull()?.first)
     }
 
     Scaffold(
