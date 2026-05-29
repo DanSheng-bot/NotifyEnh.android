@@ -2,6 +2,7 @@ package com.dansheng.notifyenh
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -55,10 +56,15 @@ fun NotifyEnhApp() {
     val pagerState = rememberPagerState(pageCount = { destinations.size })
     val scope = rememberCoroutineScope() // 用于在点击事件中启动协程
 
-    // 1. 直接通过当前 Pager 的页码计算出当前选中的导航目标，删除之前的 currentDestination 变量
-    val currentDestination = destinations[pagerState.currentPage]
+    // 拦截返回键：如果不在首页则跳转回首页，否则直接退出应用
+    BackHandler(enabled = pagerState.currentPage != 0) {
+        scope.launch {
+            pagerState.animateScrollToPage(0)
+        }
+    }
 
-    // 2. 彻底删除那两个互相监听的 LaunchedEffect 块，它们是导致卡顿的元凶
+    // 直接通过当前 Pager 的页码计算出当前选中的导航目标
+    val currentDestination = destinations[pagerState.currentPage]
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
