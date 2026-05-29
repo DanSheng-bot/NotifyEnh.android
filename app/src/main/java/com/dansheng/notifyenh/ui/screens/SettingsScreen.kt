@@ -55,7 +55,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@SuppressLint("BatteryLife")
+@SuppressLint("BatteryLife", "LocalContextGetResourceValueCall")
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -84,6 +84,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
     }
 
+    val exportSuccessMsg = stringResource(R.string.export_success)
+    val importCompletedMsg = stringResource(R.string.import_completed)
+    val settingsSavedRestartMsg = stringResource(R.string.settings_saved_restart)
+
     // 导出 Launcher
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -100,7 +104,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     }
                     Toast.makeText(
                         context,
-                        context.getString(R.string.export_success),
+                        exportSuccessMsg,
                         Toast.LENGTH_SHORT
                     ).show()
                 } catch (e: Exception) {
@@ -132,7 +136,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     database.taskDao().insertAll(newTasks)
                     Toast.makeText(
                         context,
-                        context.getString(R.string.import_completed),
+                        importCompletedMsg,
                         Toast.LENGTH_SHORT
                     ).show()
                 } catch (e: Exception) {
@@ -212,7 +216,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                                 // 提示用户重启服务或自动处理
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.settings_saved_restart),
+                                    settingsSavedRestartMsg,
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }

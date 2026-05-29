@@ -16,13 +16,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -155,7 +153,7 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Icon(
-                                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    imageVector = Icons.Default.Menu,
                                     contentDescription = if (isExpanded) stringResource(R.string.collapse) else stringResource(
                                         R.string.expand
                                     )
@@ -300,7 +298,7 @@ fun TaskEditDialog(
                         trailingIcon = {
                             IconButton(onClick = { showAppPicker = true }) {
                                 Icon(
-                                    Icons.AutoMirrored.Filled.List,
+                                    Icons.Default.Menu,
                                     contentDescription = stringResource(R.string.select_app)
                                 )
                             }

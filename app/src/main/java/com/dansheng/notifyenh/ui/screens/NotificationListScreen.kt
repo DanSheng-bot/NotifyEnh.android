@@ -15,7 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
@@ -172,9 +172,10 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
     }
 
     if (notificationToTask != null) {
-        val initialTask = remember(notificationToTask) {
+        val defaultTaskName = stringResource(R.string.new_task)
+        val initialTask = remember(notificationToTask, defaultTaskName) {
             TaskEntity(
-                name = notificationToTask?.title ?: context.getString(R.string.new_task),
+                name = notificationToTask?.title ?: defaultTaskName,
                 packageName = notificationToTask?.packageName,
                 titlePattern = notificationToTask?.title ?: "",
                 contentPattern = notificationToTask?.content ?: "",
@@ -252,7 +253,7 @@ fun NotificationItem(
                     )
                     if (notification.triggeredTaskId != null) {
                         Icon(
-                            imageVector = Icons.Default.CheckCircle,
+                            imageVector = Icons.Default.Check,
                             contentDescription = stringResource(R.string.task_triggered),
                             modifier = Modifier
                                 .padding(end = 8.dp)
