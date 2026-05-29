@@ -20,6 +20,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -153,7 +155,7 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Icon(
-                                    imageVector = Icons.Default.Menu,
+                                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                     contentDescription = if (isExpanded) stringResource(R.string.collapse) else stringResource(
                                         R.string.expand
                                     )
