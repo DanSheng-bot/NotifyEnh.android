@@ -34,10 +34,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.data.prefs.AppPreferences
@@ -96,9 +98,17 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             stream.write(json.toByteArray())
                         }
                     }
-                    Toast.makeText(context, "导出成功", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.export_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 } catch (e: Exception) {
-                    Toast.makeText(context, "导出失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.export_failed, e.message),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -120,9 +130,17 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     // 清除 ID 以便重新插入
                     val newTasks = tasks.map { it.copy(id = 0) }
                     database.taskDao().insertAll(newTasks)
-                    Toast.makeText(context, "导入完成", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.import_completed),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 } catch (e: Exception) {
-                    Toast.makeText(context, "导入失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.import_failed, e.message),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -132,7 +150,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
     Column(modifier = modifier.fillMaxSize()) {
         Text(
-            text = "设置",
+            text = stringResource(R.string.settings_title),
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(16.dp)
         )
@@ -143,12 +161,12 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 .verticalScroll(scrollState)
         ) {
             ListItem(
-                headlineContent = { Text("通知监听服务") },
+                headlineContent = { Text(stringResource(R.string.notif_service)) },
                 supportingContent = {
                     val statusText = when {
-                        !isPermissionGranted -> "服务未授权，点击去授权"
-                        isServiceRunning -> "服务正在运行"
-                        else -> "服务已授权但未启动，点击尝试启动"
+                        !isPermissionGranted -> stringResource(R.string.service_unauthorized)
+                        isServiceRunning -> stringResource(R.string.service_running)
+                        else -> stringResource(R.string.service_auth_not_started)
                     }
                     Text(statusText)
                 },
@@ -176,15 +194,15 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
-                text = "稳定性设置 (保活)",
+                text = stringResource(R.string.stability_settings),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = MaterialTheme.colorScheme.primary
             )
 
             ListItem(
-                headlineContent = { Text("常驻后台 (前台服务)") },
-                supportingContent = { Text("在状态栏显示通知，防止系统回收服务") },
+                headlineContent = { Text(stringResource(R.string.persistent_mode)) },
+                supportingContent = { Text(stringResource(R.string.persistent_mode_desc)) },
                 trailingContent = {
                     Switch(
                         checked = persistentMode,
@@ -194,7 +212,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                                 // 提示用户重启服务或自动处理
                                 Toast.makeText(
                                     context,
-                                    "设置已保存，重启服务后生效",
+                                    context.getString(R.string.settings_saved_restart),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -205,9 +223,13 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
 
             ListItem(
-                headlineContent = { Text("忽略电池优化") },
+                headlineContent = { Text(stringResource(R.string.ignore_battery)) },
                 supportingContent = {
-                    Text(if (isIgnoringBattery) "已忽略" else "未忽略，点击去设置")
+                    Text(
+                        if (isIgnoringBattery) stringResource(R.string.ignored) else stringResource(
+                            R.string.not_ignored
+                        )
+                    )
                 },
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
@@ -231,24 +253,24 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
-                text = "显示设置",
+                text = stringResource(R.string.display_settings),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = MaterialTheme.colorScheme.primary
             )
 
             ThemeOption(
-                title = "跟随系统",
+                title = stringResource(R.string.theme_system),
                 selected = themeMode == ThemeMode.SYSTEM,
                 onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.SYSTEM) } }
             )
             ThemeOption(
-                title = "浅色模式",
+                title = stringResource(R.string.theme_light),
                 selected = themeMode == ThemeMode.LIGHT,
                 onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.LIGHT) } }
             )
             ThemeOption(
-                title = "深色模式",
+                title = stringResource(R.string.theme_dark),
                 selected = themeMode == ThemeMode.DARK,
                 onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.DARK) } }
             )
@@ -256,7 +278,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
-                text = "存储设置",
+                text = stringResource(R.string.storage_settings),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = MaterialTheme.colorScheme.primary
@@ -264,8 +286,15 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
             var showRetentionDialog by remember { mutableStateOf(false) }
             ListItem(
-                headlineContent = { Text("记录保留时间") },
-                supportingContent = { Text("当前：${retentionDays}天") },
+                headlineContent = { Text(stringResource(R.string.retention_time)) },
+                supportingContent = {
+                    Text(
+                        stringResource(
+                            R.string.current_retention_days,
+                            retentionDays
+                        )
+                    )
+                },
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .clickable { showRetentionDialog = true }
@@ -275,12 +304,19 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 val options = listOf(1, 3, 7, 30)
                 AlertDialog(
                     onDismissRequest = { showRetentionDialog = false },
-                    title = { Text("选择保留时间") },
+                    title = { Text(stringResource(R.string.select_retention_time)) },
                     text = {
                         Column {
                             options.forEach { days ->
                                 ListItem(
-                                    headlineContent = { Text("${days}天") },
+                                    headlineContent = {
+                                        Text(
+                                            stringResource(
+                                                R.string.days_count,
+                                                days
+                                            )
+                                        )
+                                    },
                                     trailingContent = {
                                         RadioButton(
                                             selected = retentionDays == days,
@@ -299,7 +335,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     },
                     confirmButton = {
                         TextButton(onClick = { showRetentionDialog = false }) {
-                            Text("关闭")
+                            Text(stringResource(R.string.close))
                         }
                     }
                 )
@@ -308,15 +344,15 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
-                text = "备份与恢复",
+                text = stringResource(R.string.backup_restore),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = MaterialTheme.colorScheme.primary
             )
 
             ListItem(
-                headlineContent = { Text("导出任务") },
-                supportingContent = { Text("将所有任务导出为 JSON 文件") },
+                headlineContent = { Text(stringResource(R.string.export_tasks)) },
+                supportingContent = { Text(stringResource(R.string.export_tasks_desc)) },
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .clickable {
@@ -327,8 +363,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
 
             ListItem(
-                headlineContent = { Text("导入任务") },
-                supportingContent = { Text("从 JSON 文件恢复任务") },
+                headlineContent = { Text(stringResource(R.string.import_tasks)) },
+                supportingContent = { Text(stringResource(R.string.import_tasks_desc)) },
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .clickable {

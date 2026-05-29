@@ -48,7 +48,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.TaskEntity
 import kotlinx.coroutines.launch
@@ -70,6 +72,8 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                 if (packageName == "通用") "" else packageName
             })
     }
+
+    val generalGroupTitle = stringResource(R.string.general_group)
     
     var expandedPackage by remember(groupedTasks) {
         mutableStateOf(groupedTasks.firstOrNull()?.first)
@@ -79,14 +83,14 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize(),
         topBar = {
             Text(
-                text = "任务管理",
+                text = stringResource(R.string.task_management),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(16.dp)
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "添加任务")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_task))
             }
         }
     ) { padding ->
@@ -98,7 +102,7 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "暂无任务",
+                    text = stringResource(R.string.no_tasks),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -113,6 +117,7 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
             ) {
                 groupedTasks.forEach { (packageName, tasksInGroup) ->
                     val isExpanded = expandedPackage == packageName
+                    val groupTitle = if (packageName == "通用") generalGroupTitle else packageName
                     
                     item(key = "header_$packageName") {
                         Card(
@@ -145,13 +150,15 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                                     }
                                 }
                                 Text(
-                                    text = if (appName != null) "$appName ($packageName)" else packageName,
+                                    text = if (appName != null) "$appName ($packageName)" else groupTitle,
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Icon(
                                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (isExpanded) "折叠" else "展开"
+                                    contentDescription = if (isExpanded) stringResource(R.string.collapse) else stringResource(
+                                        R.string.expand
+                                    )
                                 )
                             }
                         }
@@ -225,14 +232,14 @@ fun TaskItem(
                 Row(modifier = Modifier.padding(top = 4.dp)) {
                     if (task.actionCancel) {
                         Text(
-                            "取消通知 ", 
+                            stringResource(R.string.action_cancel_notif) + " ", 
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
                     if (task.actionTts) {
                         Text(
-                            "TTS朗读", 
+                            stringResource(R.string.action_tts), 
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.secondary
                         )
@@ -240,10 +247,10 @@ fun TaskItem(
                 }
             }
             IconButton(onClick = { onEdit(task) }) {
-                Icon(Icons.Default.Edit, contentDescription = "编辑")
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "删除")
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
             }
             Switch(checked = task.isEnabled, onCheckedChange = onToggle)
         }
@@ -269,7 +276,7 @@ fun TaskEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (task == null) "添加任务" else "编辑任务") },
+        title = { Text(if (task == null) stringResource(R.string.add_task) else stringResource(R.string.edit_task)) },
         text = {
             Column(
                 modifier = Modifier
@@ -280,7 +287,7 @@ fun TaskEditDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("任务名称") },
+                    label = { Text(stringResource(R.string.task_name)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 
@@ -288,11 +295,14 @@ fun TaskEditDialog(
                     OutlinedTextField(
                         value = packageName,
                         onValueChange = { packageName = it },
-                        label = { Text("限制应用包名 (可选)") },
+                        label = { Text(stringResource(R.string.package_filter)) },
                         modifier = Modifier.fillMaxWidth(),
                         trailingIcon = {
                             IconButton(onClick = { showAppPicker = true }) {
-                                Icon(Icons.AutoMirrored.Filled.List, contentDescription = "选择应用")
+                                Icon(
+                                    Icons.AutoMirrored.Filled.List,
+                                    contentDescription = stringResource(R.string.select_app)
+                                )
                             }
                         }
                     )
@@ -311,14 +321,14 @@ fun TaskEditDialog(
                 OutlinedTextField(
                     value = titlePattern,
                     onValueChange = { titlePattern = it },
-                    label = { Text("标题匹配模式 (可选)") },
+                    label = { Text(stringResource(R.string.title_pattern)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = contentPattern,
                     onValueChange = { contentPattern = it },
-                    label = { Text("内容匹配模式 (可选)") },
+                    label = { Text(stringResource(R.string.content_pattern)) },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -329,9 +339,12 @@ fun TaskEditDialog(
                         .clickable { isRegex = !isRegex }
                 ) {
                     Checkbox(checked = isRegex, onCheckedChange = { isRegex = it })
-                    Text("使用正则表达式")
+                    Text(stringResource(R.string.use_regex))
                 }
-                Text("触发操作:", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    stringResource(R.string.actions_label),
+                    style = MaterialTheme.typography.labelLarge
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -343,7 +356,7 @@ fun TaskEditDialog(
                             .clickable { actionCancel = !actionCancel }
                     ) {
                         Checkbox(checked = actionCancel, onCheckedChange = { actionCancel = it })
-                        Text("取消通知")
+                        Text(stringResource(R.string.action_cancel_notif))
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -352,7 +365,7 @@ fun TaskEditDialog(
                             .clickable { actionTts = !actionTts }
                     ) {
                         Checkbox(checked = actionTts, onCheckedChange = { actionTts = it })
-                        Text("TTS朗读")
+                        Text(stringResource(R.string.action_tts))
                     }
                 }
             }
@@ -376,12 +389,12 @@ fun TaskEditDialog(
                 },
                 enabled = name.isNotBlank() && (titlePattern.isNotBlank() || contentPattern.isNotBlank())
             ) {
-                Text("确定")
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -417,20 +430,23 @@ fun AppPickerLoader(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("选择应用") },
+        title = { Text(stringResource(R.string.select_app)) },
         text = {
             Column {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text("搜索应用名或包名") },
+                    label = { Text(stringResource(R.string.search_app_placeholder)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp),
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "清除")
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = stringResource(R.string.clear)
+                                )
                             }
                         }
                     },
@@ -450,7 +466,7 @@ fun AppPickerLoader(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

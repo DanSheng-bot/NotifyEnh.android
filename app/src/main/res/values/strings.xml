@@ -1,3 +1,86 @@
 <resources>
     <string name="app_name">NotifyEnh</string>
+
+    <!-- Home / Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_tasks">Tasks</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Notification List -->
+    <string name="search_placeholder">Search title, content or app</string>
+    <string name="clear">Clear</string>
+    <string name="more_options">More options</string>
+    <string name="clear_all_records">Clear all records</string>
+    <string name="no_notifications">No notification records</string>
+    <string name="no_matching_notifications">No matching notifications found</string>
+    <string name="confirm_clear_title">Confirm Clear</string>
+    <string name="confirm_clear_message">Are you sure you want to clear all notification records? This action cannot be undone.</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="task_triggered">Task triggered</string>
+    <string name="create_task">Create task</string>
+    <string name="delete_record">Delete record</string>
+    <string name="no_title">No Title</string>
+    <string name="no_content">No Content</string>
+
+    <!-- Tasker Screen -->
+    <string name="task_management">Task Management</string>
+    <string name="add_task">Add Task</string>
+    <string name="no_tasks">No tasks</string>
+    <string name="general_group">General</string>
+    <string name="collapse">Collapse</string>
+    <string name="expand">Expand</string>
+    <string name="action_cancel_notif">Cancel Notification</string>
+    <string name="action_tts">TTS Speak</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="edit_task">Edit Task</string>
+    <string name="task_name">Task Name</string>
+    <string name="package_filter">Package Filter (Optional)</string>
+    <string name="select_app">Select App</string>
+    <string name="title_pattern">Title Pattern (Optional)</string>
+    <string name="content_pattern">Content Pattern (Optional)</string>
+    <string name="use_regex">Use Regex</string>
+    <string name="actions_label">Actions:</string>
+    <string name="search_app_placeholder">Search app name or package</string>
+    <string name="new_task">New Task</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="notif_service">Notification Listener Service</string>
+    <string name="service_unauthorized">Service unauthorized, click to authorize</string>
+    <string name="service_running">Service is running</string>
+    <string name="service_auth_not_started">Service authorized but not started, click to try starting</string>
+    <string name="stability_settings">Stability Settings (Keep-alive)</string>
+    <string name="persistent_mode">Persistent Mode (Foreground Service)</string>
+    <string name="persistent_mode_desc">Show notification in status bar to prevent service recycling</string>
+    <string name="settings_saved_restart">Settings saved, takes effect after service restart</string>
+    <string name="ignore_battery">Ignore Battery Optimizations</string>
+    <string name="ignored">Ignored</string>
+    <string name="not_ignored">Not ignored, click to settings</string>
+    <string name="display_settings">Display Settings</string>
+    <string name="theme_system">Follow System</string>
+    <string name="theme_light">Light Mode</string>
+    <string name="theme_dark">Dark Mode</string>
+    <string name="storage_settings">Storage Settings</string>
+    <string name="retention_time">Record Retention Time</string>
+    <string name="current_retention_days">Current: %1$d days</string>
+    <string name="select_retention_time">Select Retention Time</string>
+    <string name="days_count">%1$d days</string>
+    <string name="close">Close</string>
+    <string name="backup_restore">Backup &amp; Restore</string>
+    <string name="export_tasks">Export Tasks</string>
+    <string name="export_tasks_desc">Export all tasks as a JSON file</string>
+    <string name="import_tasks">Import Tasks</string>
+    <string name="import_tasks_desc">Restore tasks from a JSON file</string>
+    <string name="export_success">Export successful</string>
+    <string name="export_failed">Export failed: %1$s</string>
+    <string name="import_completed">Import completed</string>
+    <string name="import_failed">Import failed: %1$s</string>
+
+    <!-- Foreground Service -->
+    <string name="fg_service_title">NotifyEnh is running</string>
+    <string name="fg_service_text">Listening for notifications…</string>
+    <string name="fg_channel_name">Service Running Notification</string>
+    <string name="fg_channel_desc">Ensures the app runs stably in the background</string>
 </resources>

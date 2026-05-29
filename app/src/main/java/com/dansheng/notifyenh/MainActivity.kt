@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import com.dansheng.notifyenh.data.prefs.AppPreferences
 import com.dansheng.notifyenh.data.prefs.ThemeMode
@@ -74,10 +75,10 @@ fun NotifyEnhApp() {
                     icon = {
                         Icon(
                             painterResource(it.icon),
-                            contentDescription = it.label
+                            contentDescription = stringResource(it.label)
                         )
                     },
-                    label = { Text(it.label) },
+                    label = { Text(stringResource(it.label)) },
                     selected = it == currentDestination, // 依然能正确高亮
                     onClick = {
                         // 3. 点击时直接异步触发滚动，不再污染中间状态
@@ -112,10 +113,10 @@ fun NotifyEnhApp() {
 }
 
 enum class AppDestinations(
-    val label: String,
+    val label: Int,
     val icon: Int,
 ) {
-    HOME("首页", R.drawable.ic_home),
-    Tasker("任务", R.drawable.ic_tasks),
-    PROFILE("配置", R.drawable.ic_settings),
+    HOME(R.string.nav_home, R.drawable.ic_home),
+    Tasker(R.string.nav_tasks, R.drawable.ic_tasks),
+    PROFILE(R.string.nav_settings, R.drawable.ic_settings),
 }

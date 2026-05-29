@@ -105,8 +105,8 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         )
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("NotifyEnh 正在运行")
-            .setContentText("监听通知中...")
+            .setContentTitle(getString(R.string.fg_service_title))
+            .setContentText(getString(R.string.fg_service_text))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
@@ -127,10 +127,10 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "服务运行通知",
+            getString(R.string.fg_channel_name),
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "确保应用在后台稳定运行"
+            description = getString(R.string.fg_channel_desc)
         }
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)

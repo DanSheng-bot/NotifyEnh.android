@@ -1,0 +1,86 @@
+<resources>
+    <string name="app_name">通知增强</string>
+
+    <!-- Home / Nav -->
+    <string name="nav_home">首页</string>
+    <string name="nav_tasks">任务</string>
+    <string name="nav_settings">配置</string>
+
+    <!-- Notification List -->
+    <string name="search_placeholder">搜索通知标题、内容或应用</string>
+    <string name="clear">清除</string>
+    <string name="more_options">更多选项</string>
+    <string name="clear_all_records">清除所有记录</string>
+    <string name="no_notifications">暂无通知记录</string>
+    <string name="no_matching_notifications">未找到相关通知</string>
+    <string name="confirm_clear_title">确认清除</string>
+    <string name="confirm_clear_message">确定要清除所有通知记录吗？此操作不可撤销。</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+    <string name="task_triggered">已触发任务</string>
+    <string name="create_task">创建任务</string>
+    <string name="delete_record">删除记录</string>
+    <string name="no_title">无标题</string>
+    <string name="no_content">无内容</string>
+
+    <!-- Tasker Screen -->
+    <string name="task_management">任务管理</string>
+    <string name="add_task">添加任务</string>
+    <string name="no_tasks">暂无任务</string>
+    <string name="general_group">通用</string>
+    <string name="collapse">折叠</string>
+    <string name="expand">展开</string>
+    <string name="action_cancel_notif">取消通知</string>
+    <string name="action_tts">TTS朗读</string>
+    <string name="edit">编辑</string>
+    <string name="delete">删除</string>
+    <string name="edit_task">编辑任务</string>
+    <string name="task_name">任务名称</string>
+    <string name="package_filter">限制应用包名 (可选)</string>
+    <string name="select_app">选择应用</string>
+    <string name="title_pattern">标题匹配模式 (可选)</string>
+    <string name="content_pattern">内容匹配模式 (可选)</string>
+    <string name="use_regex">使用正则表达式</string>
+    <string name="actions_label">触发操作:</string>
+    <string name="search_app_placeholder">搜索应用名或包名</string>
+    <string name="new_task">新任务</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">设置</string>
+    <string name="notif_service">通知监听服务</string>
+    <string name="service_unauthorized">服务未授权，点击去授权</string>
+    <string name="service_running">服务正在运行</string>
+    <string name="service_auth_not_started">服务已授权但未启动，点击尝试启动</string>
+    <string name="stability_settings">稳定性设置 (保活)</string>
+    <string name="persistent_mode">常驻后台 (前台服务)</string>
+    <string name="persistent_mode_desc">在状态栏显示通知，防止系统回收服务</string>
+    <string name="settings_saved_restart">设置已保存，重启服务后生效</string>
+    <string name="ignore_battery">忽略电池优化</string>
+    <string name="ignored">已忽略</string>
+    <string name="not_ignored">未忽略，点击去设置</string>
+    <string name="display_settings">显示设置</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色模式</string>
+    <string name="theme_dark">深色模式</string>
+    <string name="storage_settings">存储设置</string>
+    <string name="retention_time">记录保留时间</string>
+    <string name="current_retention_days">当前：%1$d天</string>
+    <string name="select_retention_time">选择保留时间</string>
+    <string name="days_count">%1$d天</string>
+    <string name="close">关闭</string>
+    <string name="backup_restore">备份与恢复</string>
+    <string name="export_tasks">导出任务</string>
+    <string name="export_tasks_desc">将所有任务导出为 JSON 文件</string>
+    <string name="import_tasks">导入任务</string>
+    <string name="import_tasks_desc">从 JSON 文件恢复任务</string>
+    <string name="export_success">导出成功</string>
+    <string name="export_failed">导出失败：%1$s</string>
+    <string name="import_completed">导入完成</string>
+    <string name="import_failed">导入失败：%1$s</string>
+
+    <!-- Foreground Service -->
+    <string name="fg_service_title">通知增强 正在运行</string>
+    <string name="fg_service_text">监听通知中…</string>
+    <string name="fg_channel_name">服务运行通知</string>
+    <string name="fg_channel_desc">确保应用在后台稳定运行</string>
+</resources>

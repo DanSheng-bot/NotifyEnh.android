@@ -42,8 +42,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.NotificationEntity
 import com.dansheng.notifyenh.data.TaskEntity
@@ -85,7 +87,7 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.weight(1f),
                 placeholder = { 
                     Text(
-                        "搜索通知标题、内容或应用", 
+                        stringResource(R.string.search_placeholder), 
                         maxLines = 1, 
                         overflow = TextOverflow.Ellipsis
                     ) 
@@ -94,7 +96,10 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "清除")
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = stringResource(R.string.clear)
+                            )
                         }
                     }
                 },
@@ -104,14 +109,17 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
 
             Box {
                 IconButton(onClick = { showMoreMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "更多选项")
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.more_options)
+                    )
                 }
                 DropdownMenu(
                     expanded = showMoreMenu,
                     onDismissRequest = { showMoreMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("清除所有记录") },
+                        text = { Text(stringResource(R.string.clear_all_records)) },
                         onClick = {
                             showMoreMenu = false
                             showClearConfirm = true
@@ -128,7 +136,9 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (searchQuery.isEmpty()) "暂无通知记录" else "未找到相关通知",
+                    text = if (searchQuery.isEmpty()) stringResource(R.string.no_notifications) else stringResource(
+                        R.string.no_matching_notifications
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -164,7 +174,7 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
     if (notificationToTask != null) {
         val initialTask = remember(notificationToTask) {
             TaskEntity(
-                name = notificationToTask?.title ?: "新任务",
+                name = notificationToTask?.title ?: context.getString(R.string.new_task),
                 packageName = notificationToTask?.packageName,
                 titlePattern = notificationToTask?.title ?: "",
                 contentPattern = notificationToTask?.content ?: "",
@@ -186,8 +196,8 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
     if (showClearConfirm) {
         AlertDialog(
             onDismissRequest = { showClearConfirm = false },
-            title = { Text("确认清除") },
-            text = { Text("确定要清除所有通知记录吗？此操作不可撤销。") },
+            title = { Text(stringResource(R.string.confirm_clear_title)) },
+            text = { Text(stringResource(R.string.confirm_clear_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -197,12 +207,12 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                         }
                     }
                 ) {
-                    Text("确定", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClearConfirm = false }) {
-                    Text("取消")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -243,7 +253,7 @@ fun NotificationItem(
                     if (notification.triggeredTaskId != null) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "已触发任务",
+                            contentDescription = stringResource(R.string.task_triggered),
                             modifier = Modifier
                                 .padding(end = 8.dp)
                                 .size(14.dp),
@@ -257,12 +267,12 @@ fun NotificationItem(
                     )
                 }
                 Text(
-                    text = notification.title ?: "No Title",
+                    text = notification.title ?: stringResource(R.string.no_title),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
                 Text(
-                    text = notification.content ?: "No Content",
+                    text = notification.content ?: stringResource(R.string.no_content),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -273,7 +283,7 @@ fun NotificationItem(
             onDismissRequest = { showMenu = false }
         ) {
             DropdownMenuItem(
-                text = { Text("创建任务") },
+                text = { Text(stringResource(R.string.create_task)) },
                 onClick = {
                     showMenu = false
                     onCreateTask(notification)
@@ -281,7 +291,7 @@ fun NotificationItem(
                 leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
             )
             DropdownMenuItem(
-                text = { Text("删除记录") },
+                text = { Text(stringResource(R.string.delete_record)) },
                 onClick = {
                     showMenu = false
                     onDelete()
