@@ -305,7 +305,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
 
             if (showRetentionDialog) {
-                val options = listOf(1, 3, 7, 30)
+                val options = listOf(1, 3, 7, 30, 999)
                 AlertDialog(
                     onDismissRequest = { showRetentionDialog = false },
                     title = { Text(stringResource(R.string.select_retention_time)) },
