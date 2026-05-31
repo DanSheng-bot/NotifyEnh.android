@@ -214,8 +214,7 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                 ) {
                     val itemCount = notifications.itemCount
                     for (index in 0 until itemCount) {
-                        val item = notifications.peek(index)
-                        when (item) {
+                        when (val item = notifications.peek(index)) {
                             is NotificationUiModel.Separator -> {
                                 stickyHeader(key = "sep_${item.date}") {
                                     DateHeader(item.date)
@@ -379,7 +378,7 @@ fun DateHeader(date: String) {
     }
 }
 
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NotificationItem(
     notification: NotificationEntity,
