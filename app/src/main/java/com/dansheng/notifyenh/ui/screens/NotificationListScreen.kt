@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -107,7 +106,7 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                         ).format(Date(it.notification.postTime))
                     }
 
-                    if (afterDate != null && beforeDate != afterDate) {
+                    if (afterDate != null && (beforeDate == null || beforeDate != afterDate)) {
                         NotificationUiModel.Separator(afterDate)
                     } else {
                         null
@@ -116,7 +115,9 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
         }
     }.collectAsLazyPagingItems()
 
-    val listState = rememberLazyListState()
+    // 使用 remember 而非 rememberLazyListState (默认用 rememberSaveable)
+    // 这样应用关闭重新打开时，滚动位置会自动重置到顶端
+    val listState = remember { LazyListState() }
     var notificationToTask by remember { mutableStateOf<NotificationEntity?>(null) }
     var showMoreMenu by remember { mutableStateOf(false) }
     var showClearConfirm by remember { mutableStateOf(false) }
