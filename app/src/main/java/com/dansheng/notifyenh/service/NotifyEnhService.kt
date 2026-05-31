@@ -235,7 +235,7 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
             } else {
                 text.contains(pattern, ignoreCase = true)
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

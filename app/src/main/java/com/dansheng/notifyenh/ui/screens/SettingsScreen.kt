@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.service.notification.NotificationListenerService
 import android.text.TextUtils
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -132,7 +133,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     }
                     val tasks = Json.decodeFromString<List<TaskEntity>>(content ?: "")
                     // 清除 ID 以便重新插入
-                    val newTasks = tasks.map { it.copy(id = 0) }
+                    val newTasks = tasks.map { taskEntity ->
+                        taskEntity.copy(id = 0)
+                    }
                     database.taskDao().insertAll(newTasks)
                     Toast.makeText(
                         context,
@@ -182,7 +185,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                                 context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                             } else {
                                 if (checked) {
-                                    android.service.notification.NotificationListenerService.requestRebind(
+                                    NotificationListenerService.requestRebind(
                                         ComponentName(context, NotifyEnhService::class.java)
                                     )
                                 } else {

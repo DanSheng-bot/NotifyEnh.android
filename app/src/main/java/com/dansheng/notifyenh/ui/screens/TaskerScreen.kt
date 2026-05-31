@@ -144,7 +144,7 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                                             val pm = context.packageManager
                                             val info = pm.getApplicationInfo(packageName, 0)
                                             pm.getApplicationLabel(info).toString()
-                                        } catch (e: Exception) {
+                                        } catch (_: Exception) {
                                             null
                                         }
                                     }
