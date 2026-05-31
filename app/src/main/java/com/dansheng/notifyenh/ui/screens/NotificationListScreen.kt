@@ -463,9 +463,10 @@ sealed class NotificationUiModel {
 
 fun Modifier.scrollbar(
     state: LazyListState,
-    thickness: Dp = 4.dp,
-    color: Color = Color.Gray.copy(alpha = 0.5f),
-    cornerRadius: Dp = 2.dp
+    thickness: Dp = 6.dp,
+    color: Color = Color.Gray.copy(alpha = 0.7f),
+    cornerRadius: Dp = 3.dp,
+    minHeight: Dp = 32.dp
 ): Modifier = drawWithContent {
     drawContent()
 
@@ -474,17 +475,30 @@ fun Modifier.scrollbar(
 
     if (visibleItemsInfo.isNotEmpty()) {
         val totalItemsCount = layoutInfo.totalItemsCount
-        val firstVisibleItemIndex = visibleItemsInfo.first().index
         val visibleItemsCount = visibleItemsInfo.size
 
-        val scrollbarHeight = size.height * (visibleItemsCount.toFloat() / totalItemsCount)
-        val scrollbarOffset = size.height * (firstVisibleItemIndex.toFloat() / totalItemsCount)
+        if (totalItemsCount > visibleItemsCount) {
+            val firstVisibleItemIndex = visibleItemsInfo.first().index
 
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(size.width - thickness.toPx(), scrollbarOffset),
-            size = Size(thickness.toPx(), scrollbarHeight),
-            cornerRadius = CornerRadius(cornerRadius.toPx())
-        )
+            // 计算理论高度和实际高度（不小于最小高度）
+            val theoreticalHeight = size.height * (visibleItemsCount.toFloat() / totalItemsCount)
+            val actualHeight = theoreticalHeight.coerceAtLeast(minHeight.toPx())
+
+            // 计算滚动进度 (0.0 到 1.0)
+            val scrollProgress =
+                firstVisibleItemIndex.toFloat() / (totalItemsCount - visibleItemsCount).coerceAtLeast(
+                    1
+                ).toFloat()
+
+            // 计算偏移量，确保滚动条不会超出底部
+            val scrollbarOffset = (size.height - actualHeight) * scrollProgress
+
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(size.width - thickness.toPx(), scrollbarOffset),
+                size = Size(thickness.toPx(), actualHeight),
+                cornerRadius = CornerRadius(cornerRadius.toPx())
+            )
+        }
     }
 }
