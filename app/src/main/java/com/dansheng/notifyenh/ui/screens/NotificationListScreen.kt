@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,9 +43,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
@@ -145,37 +152,41 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                state = listState,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(notifications, key = { it.id }) { notification ->
-                    NotificationItem(
-                        notification = notification,
-                        onDelete = {
-                            scope.launch {
-                                database.notificationDao().delete(notification)
+            Box(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .scrollbar(listState),
+                    state = listState,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 16.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(notifications, key = { it.id }) { notification ->
+                        NotificationItem(
+                            notification = notification,
+                            onDelete = {
+                                scope.launch {
+                                    database.notificationDao().delete(notification)
+                                }
+                            },
+                            onCreateTask = {
+                                notificationToTask = it
+                            },
+                            onOpenApp = {
+                                val launchIntent =
+                                    context.packageManager.getLaunchIntentForPackage(it.packageName)
+                                if (launchIntent != null) {
+                                    context.startActivity(launchIntent)
+                                } else {
+                                    // 提示无法打开
+                                }
                             }
-                        },
-                        onCreateTask = {
-                            notificationToTask = it
-                        },
-                        onOpenApp = {
-                            val launchIntent =
-                                context.packageManager.getLaunchIntentForPackage(it.packageName)
-                            if (launchIntent != null) {
-                                context.startActivity(launchIntent)
-                            } else {
-                                // 提示无法打开
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -326,5 +337,33 @@ fun NotificationItem(
                 leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
             )
         }
+    }
+}
+
+fun Modifier.scrollbar(
+    state: LazyListState,
+    thickness: Dp = 4.dp,
+    color: Color = Color.Gray.copy(alpha = 0.5f),
+    cornerRadius: Dp = 2.dp
+): Modifier = drawWithContent {
+    drawContent()
+
+    val layoutInfo = state.layoutInfo
+    val visibleItemsInfo = layoutInfo.visibleItemsInfo
+
+    if (visibleItemsInfo.isNotEmpty()) {
+        val totalItemsCount = layoutInfo.totalItemsCount
+        val firstVisibleItemIndex = visibleItemsInfo.first().index
+        val visibleItemsCount = visibleItemsInfo.size
+
+        val scrollbarHeight = size.height * (visibleItemsCount.toFloat() / totalItemsCount)
+        val scrollbarOffset = size.height * (firstVisibleItemIndex.toFloat() / totalItemsCount)
+
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(size.width - thickness.toPx(), scrollbarOffset),
+            size = Size(thickness.toPx(), scrollbarHeight),
+            cornerRadius = CornerRadius(cornerRadius.toPx())
+        )
     }
 }
