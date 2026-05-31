@@ -17,10 +17,10 @@ interface NotificationDao {
     suspend fun getNotificationById(id: Long): NotificationEntity?
 
     @Query("SELECT * FROM notifications ORDER BY postTime DESC")
-    fun getAllNotificationsFlow(): kotlinx.coroutines.flow.Flow<List<NotificationEntity>>
+    fun getAllNotificationsPaging(): androidx.paging.PagingSource<Int, NotificationEntity>
 
     @Query("SELECT * FROM notifications WHERE title LIKE '%' || :searchQuery || '%' OR content LIKE '%' || :searchQuery || '%' OR packageName LIKE '%' || :searchQuery || '%' ORDER BY postTime DESC")
-    fun searchNotifications(searchQuery: String): kotlinx.coroutines.flow.Flow<List<NotificationEntity>>
+    fun searchNotificationsPaging(searchQuery: String): androidx.paging.PagingSource<Int, NotificationEntity>
 
     @Query("DELETE FROM notifications WHERE postTime < :timestamp")
     suspend fun deleteOldNotifications(timestamp: Long)

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -34,7 +33,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +51,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.NotificationEntity
@@ -69,13 +71,15 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
-    val notifications by remember(searchQuery) {
-        if (searchQuery.isBlank()) {
-            database.notificationDao().getAllNotificationsFlow()
-        } else {
-            database.notificationDao().searchNotifications(searchQuery)
-        }
-    }.collectAsState(initial = emptyList())
+    val notifications = remember(searchQuery) {
+        Pager(PagingConfig(pageSize = 20)) {
+            if (searchQuery.isBlank()) {
+                database.notificationDao().getAllNotificationsPaging()
+            } else {
+                database.notificationDao().searchNotificationsPaging(searchQuery)
+            }
+        }.flow
+    }.collectAsLazyPagingItems()
 
     val listState = rememberLazyListState()
     var notificationToTask by remember { mutableStateOf<NotificationEntity?>(null) }
@@ -138,7 +142,7 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        if (notifications.isEmpty()) {
+        if (notifications.itemCount == 0) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -165,27 +169,33 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                     ),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(notifications, key = { it.id }) { notification ->
-                        NotificationItem(
-                            notification = notification,
-                            onDelete = {
-                                scope.launch {
-                                    database.notificationDao().delete(notification)
+                    items(
+                        count = notifications.itemCount,
+                        key = notifications.itemKey { it.id }
+                    ) { index ->
+                        val notification = notifications[index]
+                        if (notification != null) {
+                            NotificationItem(
+                                notification = notification,
+                                onDelete = {
+                                    scope.launch {
+                                        database.notificationDao().delete(notification)
+                                    }
+                                },
+                                onCreateTask = {
+                                    notificationToTask = it
+                                },
+                                onOpenApp = {
+                                    val launchIntent =
+                                        context.packageManager.getLaunchIntentForPackage(it.packageName)
+                                    if (launchIntent != null) {
+                                        context.startActivity(launchIntent)
+                                    } else {
+                                        // 提示无法打开
+                                    }
                                 }
-                            },
-                            onCreateTask = {
-                                notificationToTask = it
-                            },
-                            onOpenApp = {
-                                val launchIntent =
-                                    context.packageManager.getLaunchIntentForPackage(it.packageName)
-                                if (launchIntent != null) {
-                                    context.startActivity(launchIntent)
-                                } else {
-                                    // 提示无法打开
-                                }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
