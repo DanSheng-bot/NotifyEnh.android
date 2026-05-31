@@ -63,7 +63,7 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            val name = "NotifyEnh_v${android.defaultConfig.versionName}_${variant.name}.apk"
+            val name = "NotifyEnh_v${android.defaultConfig.versionName}.apk"
             output.outputFileName.set(name)
         }
     }
