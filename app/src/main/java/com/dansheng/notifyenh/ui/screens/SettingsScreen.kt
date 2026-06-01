@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import android.service.notification.NotificationListenerService
 import android.text.TextUtils
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -185,9 +184,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                                 context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                             } else {
                                 if (checked) {
-                                    NotificationListenerService.requestRebind(
-                                        ComponentName(context, NotifyEnhService::class.java)
-                                    )
+                                    NotifyEnhService.tryReconnectService(context)
                                 } else {
                                     NotifyEnhService.stopService()
                                 }

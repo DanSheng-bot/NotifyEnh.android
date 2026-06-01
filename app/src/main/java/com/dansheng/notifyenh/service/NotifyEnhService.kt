@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.service.notification.NotificationListenerService
@@ -44,6 +45,30 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         fun stopService() {
             instance?.requestUnbind()
             _isServiceRunning.value = false
+        }
+
+        /**
+         * 强制重启通知监听服务（解决系统杀死应用后服务无法自动恢复的问题）
+         */
+        fun tryReconnectService(context: Context) {
+            val componentName = ComponentName(context, NotifyEnhService::class.java)
+            val pm = context.packageManager
+
+            // 方案：通过禁用并重新启用组件来“踢”一下系统服务管理器
+            pm.setComponentEnabledSetting(
+                componentName,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            pm.setComponentEnabledSetting(
+                componentName,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+
+            // 额外尝试主动请求重连
+            requestRebind(componentName)
+            Log.d(TAG, "Attempted to hard reconnect NotificationListenerService")
         }
     }
 
