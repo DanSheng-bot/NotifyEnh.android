@@ -81,6 +81,8 @@
     <string name="about">About</string>
     <string name="changelog">Changelog</string>
     <string name="changelog_desc">View recent update history</string>
+    <string name="software_desc">Software Description</string>
+    <string name="software_desc_detail">NotifyEnh is a tool designed to enhance Android notifications. \n\nKey features include:\n• Notification Logging: Automatically save notification history.\n• Task Automation: Create rules to handle notifications based on app, title, or content.\n• Automatic Actions: Auto-dismiss notifications or use TTS to read them aloud.\n• Privacy &amp; Control: Filter out persistent notifications and manage how long records are kept.</string>
 
     <!-- Foreground Service -->
     <string name="fg_service_title">NotifyEnh is running</string>

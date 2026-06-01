@@ -393,6 +393,21 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
 
             var showChangelog by remember { mutableStateOf(false) }
+            var showSoftwareDesc by remember { mutableStateOf(false) }
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.software_desc)) },
+                supportingContent = {
+                    Text(
+                        stringResource(R.string.software_desc_detail),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                },
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable { showSoftwareDesc = true }
+            )
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.changelog)) },
@@ -404,6 +419,19 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
             if (showChangelog) {
                 ChangelogDialog(onDismiss = { showChangelog = false })
+            }
+
+            if (showSoftwareDesc) {
+                AlertDialog(
+                    onDismissRequest = { showSoftwareDesc = false },
+                    title = { Text(stringResource(R.string.software_desc)) },
+                    text = { Text(stringResource(R.string.software_desc_detail)) },
+                    confirmButton = {
+                        TextButton(onClick = { showSoftwareDesc = false }) {
+                            Text(stringResource(R.string.confirm))
+                        }
+                    }
+                )
             }
         }
     }
