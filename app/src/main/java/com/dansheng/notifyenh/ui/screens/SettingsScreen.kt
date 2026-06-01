@@ -45,6 +45,7 @@ import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.data.prefs.AppPreferences
 import com.dansheng.notifyenh.data.prefs.ThemeMode
 import com.dansheng.notifyenh.service.NotifyEnhService
+import com.dansheng.notifyenh.ui.components.ChangelogDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -381,6 +382,29 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         )
                     }
             )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text(
+                text = stringResource(R.string.about),
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            var showChangelog by remember { mutableStateOf(false) }
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.changelog)) },
+                supportingContent = { Text(stringResource(R.string.changelog_desc)) },
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable { showChangelog = true }
+            )
+
+            if (showChangelog) {
+                ChangelogDialog(onDismiss = { showChangelog = false })
+            }
         }
     }
 }

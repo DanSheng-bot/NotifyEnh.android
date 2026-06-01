@@ -78,6 +78,9 @@
     <string name="export_failed">导出失败：%1$s</string>
     <string name="import_completed">导入完成</string>
     <string name="import_failed">导入失败：%1$s</string>
+    <string name="about">关于</string>
+    <string name="changelog">更新日志</string>
+    <string name="changelog_desc">查看最近的版本更新内容</string>
 
     <!-- Foreground Service -->
     <string name="fg_service_title">通知增强 正在运行</string>

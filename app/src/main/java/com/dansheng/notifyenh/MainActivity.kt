@@ -17,14 +17,16 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import com.dansheng.notifyenh.data.prefs.AppPreferences
 import com.dansheng.notifyenh.data.prefs.ThemeMode
 import com.dansheng.notifyenh.service.NotifyEnhService
+import com.dansheng.notifyenh.ui.components.ChangelogDialog
 import com.dansheng.notifyenh.ui.screens.NotificationListScreen
 import com.dansheng.notifyenh.ui.screens.SettingsScreen
 import com.dansheng.notifyenh.ui.screens.TaskerScreen
@@ -51,19 +53,39 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
             NotifyEnhTheme(darkTheme = darkTheme) {
-                NotifyEnhApp()
+                NotifyEnhApp(appPreferences)
             }
         }
     }
 
 }
 
-@PreviewScreenSizes
 @Composable
-fun NotifyEnhApp() {
+fun NotifyEnhApp(appPreferences: AppPreferences) {
+    val context = LocalContext.current
     val destinations = AppDestinations.entries
     val pagerState = rememberPagerState(pageCount = { destinations.size })
     val scope = rememberCoroutineScope() // 用于在点击事件中启动协程
+
+    val lastSeenVersion by appPreferences.lastSeenVersionFlow.collectAsState(initial = -1)
+    val currentVersion = remember(context) {
+        try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.longVersionCode.toInt()
+        } catch (e: Exception) {
+            0
+        }
+    }
+
+    if (lastSeenVersion != -1 && currentVersion > lastSeenVersion) {
+        ChangelogDialog(
+            onDismiss = {
+                scope.launch {
+                    appPreferences.setLastSeenVersion(currentVersion)
+                }
+            }
+        )
+    }
 
     // 拦截返回键：如果不在首页则跳转回首页，否则直接退出应用
     BackHandler(enabled = pagerState.currentPage != 0) {

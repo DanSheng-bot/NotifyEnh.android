@@ -22,6 +22,7 @@ class AppPreferences(private val context: Context) {
         val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
         val PERSISTENT_MODE_KEY = booleanPreferencesKey("persistent_mode")
         val RETENTION_DAYS_KEY = intPreferencesKey("retention_days")
+        val LAST_SEEN_VERSION_KEY = intPreferencesKey("last_seen_version")
     }
 
     val themeModeFlow: Flow<ThemeMode> = context.dataStore.data
@@ -40,6 +41,11 @@ class AppPreferences(private val context: Context) {
             preferences[RETENTION_DAYS_KEY] ?: 7
         }
 
+    val lastSeenVersionFlow: Flow<Int> = context.dataStore.data
+        .map { preferences ->
+            preferences[LAST_SEEN_VERSION_KEY] ?: 0
+        }
+
     suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { preferences ->
             preferences[THEME_MODE_KEY] = mode.name
@@ -55,6 +61,12 @@ class AppPreferences(private val context: Context) {
     suspend fun setRetentionDays(days: Int) {
         context.dataStore.edit { preferences ->
             preferences[RETENTION_DAYS_KEY] = days
+        }
+    }
+
+    suspend fun setLastSeenVersion(version: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[LAST_SEEN_VERSION_KEY] = version
         }
     }
 }

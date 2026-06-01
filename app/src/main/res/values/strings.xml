@@ -78,6 +78,9 @@
     <string name="export_failed">Export failed: %1$s</string>
     <string name="import_completed">Import completed</string>
     <string name="import_failed">Import failed: %1$s</string>
+    <string name="about">About</string>
+    <string name="changelog">Changelog</string>
+    <string name="changelog_desc">View recent update history</string>
 
     <!-- Foreground Service -->
     <string name="fg_service_title">NotifyEnh is running</string>
