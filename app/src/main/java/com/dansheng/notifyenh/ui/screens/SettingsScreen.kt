@@ -264,21 +264,66 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.primary
             )
 
-            ThemeOption(
-                title = stringResource(R.string.theme_system),
-                selected = themeMode == ThemeMode.SYSTEM,
-                onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.SYSTEM) } }
+            var showThemeDialog by remember { mutableStateOf(false) }
+            val currentThemeText = when (themeMode) {
+                ThemeMode.SYSTEM -> stringResource(R.string.theme_system)
+                ThemeMode.LIGHT -> stringResource(R.string.theme_light)
+                ThemeMode.DARK -> stringResource(R.string.theme_dark)
+            }
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.theme_mode)) },
+                supportingContent = { Text(currentThemeText) },
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable { showThemeDialog = true }
             )
-            ThemeOption(
-                title = stringResource(R.string.theme_light),
-                selected = themeMode == ThemeMode.LIGHT,
-                onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.LIGHT) } }
-            )
-            ThemeOption(
-                title = stringResource(R.string.theme_dark),
-                selected = themeMode == ThemeMode.DARK,
-                onClick = { scope.launch { appPreferences.setThemeMode(ThemeMode.DARK) } }
-            )
+
+            if (showThemeDialog) {
+                AlertDialog(
+                    onDismissRequest = { showThemeDialog = false },
+                    title = { Text(stringResource(R.string.select_theme_mode)) },
+                    text = {
+                        Column {
+                            ThemeOptionItem(
+                                title = stringResource(R.string.theme_system),
+                                selected = themeMode == ThemeMode.SYSTEM,
+                                onClick = {
+                                    scope.launch {
+                                        appPreferences.setThemeMode(ThemeMode.SYSTEM)
+                                        showThemeDialog = false
+                                    }
+                                }
+                            )
+                            ThemeOptionItem(
+                                title = stringResource(R.string.theme_light),
+                                selected = themeMode == ThemeMode.LIGHT,
+                                onClick = {
+                                    scope.launch {
+                                        appPreferences.setThemeMode(ThemeMode.LIGHT)
+                                        showThemeDialog = false
+                                    }
+                                }
+                            )
+                            ThemeOptionItem(
+                                title = stringResource(R.string.theme_dark),
+                                selected = themeMode == ThemeMode.DARK,
+                                onClick = {
+                                    scope.launch {
+                                        appPreferences.setThemeMode(ThemeMode.DARK)
+                                        showThemeDialog = false
+                                    }
+                                }
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showThemeDialog = false }) {
+                            Text(stringResource(R.string.close))
+                        }
+                    }
+                )
+            }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -460,7 +505,7 @@ fun isIgnoringBatteryOptimizations(context: Context): Boolean {
 }
 
 @Composable
-fun ThemeOption(
+fun ThemeOptionItem(
     title: String,
     selected: Boolean,
     onClick: () -> Unit

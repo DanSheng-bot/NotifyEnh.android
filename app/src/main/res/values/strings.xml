@@ -60,9 +60,11 @@
     <string name="ignored">Ignored</string>
     <string name="not_ignored">Not ignored, click to settings</string>
     <string name="display_settings">Display Settings</string>
+    <string name="theme_mode">Theme Mode</string>
     <string name="theme_system">Follow System</string>
     <string name="theme_light">Light Mode</string>
     <string name="theme_dark">Dark Mode</string>
+    <string name="select_theme_mode">Select Theme Mode</string>
     <string name="storage_settings">Storage Settings</string>
     <string name="retention_time">Record Retention Time</string>
     <string name="current_retention_days">Current: %1$d days</string>

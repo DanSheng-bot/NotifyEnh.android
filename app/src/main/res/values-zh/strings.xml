@@ -60,9 +60,11 @@
     <string name="ignored">已忽略</string>
     <string name="not_ignored">未忽略，点击去设置</string>
     <string name="display_settings">显示设置</string>
+    <string name="theme_mode">主题模式</string>
     <string name="theme_system">跟随系统</string>
     <string name="theme_light">浅色模式</string>
     <string name="theme_dark">深色模式</string>
+    <string name="select_theme_mode">选择主题模式</string>
     <string name="storage_settings">存储设置</string>
     <string name="retention_time">记录保留时间</string>
     <string name="current_retention_days">当前：%1$d天</string>
