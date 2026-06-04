@@ -209,13 +209,15 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         }
         manager.createNotificationChannel(channel)
 
+        // Using a different ID for alarm channel to ensure it's recreated with correct importance
         val alarmChannel = NotificationChannel(
-            ALARM_CHANNEL_ID,
+            ALARM_CHANNEL_ID + "_v2",
             getString(R.string.action_alarm),
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            setSound(null, null) // We handle sound ourselves
+            setSound(null, null) 
             enableVibration(true)
+            lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
         }
         manager.createNotificationChannel(alarmChannel)
     }
@@ -345,38 +347,45 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
     }
 
     private fun startAlarm(taskName: String, ringtoneUri: String? = null) {
+        Log.d(TAG, "Starting alarm for task: $taskName")
         currentAlarmTaskName = taskName
         currentAlarmRingtone = ringtoneUri
         _isAlarmRinging.value = true
         mainHandler.removeCallbacks(snoozeRunnable)
         mainHandler.removeCallbacks(timeoutRunnable)
 
-        if (mediaPlayer == null) {
-            val alarmUri: Uri = ringtoneUri?.toUri()
-                ?: (RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE))
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(this@NotifyEnhService, alarmUri)
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                isLooping = true
-                prepare()
+        try {
+            if (mediaPlayer == null) {
+                val alarmUri: Uri = ringtoneUri?.toUri()
+                    ?: (RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE))
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(this@NotifyEnhService, alarmUri)
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    isLooping = true
+                    prepare()
+                }
             }
+
+            if (mediaPlayer?.isPlaying == false) {
+                mediaPlayer?.start()
+                Log.d(TAG, "MediaPlayer started")
+            }
+
+            // Vibrate
+            val vibrator = getSystemService(Vibrator::class.java)
+            vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 500), 0))
+            Log.d(TAG, "Vibration started")
+
+            showAlarmNotification(taskName)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting alarm", e)
         }
-
-        if (mediaPlayer?.isPlaying == false) {
-            mediaPlayer?.start()
-        }
-
-        // Vibrate
-        val vibrator = getSystemService(Vibrator::class.java)
-        vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 500), 0))
-
-        showAlarmNotification(taskName)
 
         // Auto stop after 1 minute if no response, then snooze for 5 minutes
         mainHandler.postDelayed(timeoutRunnable, 60 * 1000)
@@ -407,6 +416,7 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
 
     @SuppressLint("FullScreenIntentPolicy")
     private fun showAlarmNotification(taskName: String) {
+        Log.d(TAG, "Showing alarm notification for: $taskName")
         val stopIntent = Intent(this, NotifyEnhService::class.java).apply {
             action = ACTION_STOP_ALARM
         }
@@ -429,7 +439,7 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val notification = NotificationCompat.Builder(this, ALARM_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(this, ALARM_CHANNEL_ID + "_v2")
             .setContentTitle(getString(R.string.action_alarm))
             .setContentText(getString(R.string.alarm_active, taskName))
             .setSmallIcon(R.drawable.ic_notification)
@@ -446,6 +456,7 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
 
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(ALARM_NOTIFICATION_ID, notification)
+        Log.d(TAG, "Notification posted with ID: $ALARM_NOTIFICATION_ID")
     }
 
     override fun onDestroy() {

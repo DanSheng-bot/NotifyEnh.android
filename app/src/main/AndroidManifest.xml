@@ -39,12 +39,13 @@
 
         <activity
             android:name=".ui.AlarmActivity"
-            android:showOnLockScreen="true"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:exported="false"
             android:theme="@style/Theme.NotifyEnh"
-            android:launchMode="singleInstance" />
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:screenOrientation="portrait" />
 
         <service
             android:name=".service.NotifyEnhService"
