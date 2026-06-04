@@ -1,7 +1,13 @@
 package com.dansheng.notifyenh.ui.screens
 
+import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.media.RingtoneManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
@@ -239,9 +246,16 @@ fun TaskItem(
                     }
                     if (task.actionTts) {
                         Text(
-                            stringResource(R.string.action_tts), 
+                            stringResource(R.string.action_tts) + " ", 
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    if (task.actionAlarm) {
+                        Text(
+                            stringResource(R.string.action_alarm),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.tertiary
                         )
                     }
                 }
@@ -257,6 +271,8 @@ fun TaskItem(
     }
 }
 
+
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun TaskEditDialog(
     task: TaskEntity?,
@@ -270,9 +286,35 @@ fun TaskEditDialog(
     var isRegex by remember { mutableStateOf(task?.isRegex ?: false) }
     var actionCancel by remember { mutableStateOf(task?.actionCancel ?: false) }
     var actionTts by remember { mutableStateOf(task?.actionTts ?: false) }
+    var actionAlarm by remember { mutableStateOf(task?.actionAlarm ?: false) }
+    var alarmRingtone by remember { mutableStateOf(task?.alarmRingtone) }
 
     var showAppPicker by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val uri =
+                result.data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            alarmRingtone = uri?.toString()
+        }
+    }
+
+    val currentRingtoneName = remember(alarmRingtone) {
+        if (alarmRingtone == null) {
+            context.getString(R.string.default_ringtone)
+        } else {
+            try {
+                val ringtone = RingtoneManager.getRingtone(context, Uri.parse(alarmRingtone))
+                ringtone.getTitle(context)
+            } catch (e: Exception) {
+                context.getString(R.string.default_ringtone)
+            }
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -345,27 +387,90 @@ fun TaskEditDialog(
                     stringResource(R.string.actions_label),
                     style = MaterialTheme.typography.labelLarge
                 )
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { actionCancel = !actionCancel }
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Checkbox(checked = actionCancel, onCheckedChange = { actionCancel = it })
-                        Text(stringResource(R.string.action_cancel_notif))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { actionCancel = !actionCancel }
+                        ) {
+                            Checkbox(
+                                checked = actionCancel,
+                                onCheckedChange = { actionCancel = it })
+                            Text(stringResource(R.string.action_cancel_notif))
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { actionTts = !actionTts }
+                        ) {
+                            Checkbox(checked = actionTts, onCheckedChange = { actionTts = it })
+                            Text(stringResource(R.string.action_tts))
+                        }
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .weight(1f)
-                            .clickable { actionTts = !actionTts }
+                            .fillMaxWidth()
+                            .clickable { actionAlarm = !actionAlarm }
                     ) {
-                        Checkbox(checked = actionTts, onCheckedChange = { actionTts = it })
-                        Text(stringResource(R.string.action_tts))
+                        Checkbox(checked = actionAlarm, onCheckedChange = { actionAlarm = it })
+                        Text(stringResource(R.string.action_alarm))
+                    }
+
+                    if (actionAlarm) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 32.dp, top = 4.dp)
+                                .clickable {
+                                    val intent =
+                                        Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                                            putExtra(
+                                                RingtoneManager.EXTRA_RINGTONE_TYPE,
+                                                RingtoneManager.TYPE_ALARM
+                                            )
+                                            putExtra(
+                                                RingtoneManager.EXTRA_RINGTONE_TITLE,
+                                                context.getString(R.string.select_ringtone)
+                                            )
+                                            putExtra(
+                                                RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                                                alarmRingtone?.let { Uri.parse(it) })
+                                            putExtra(
+                                                RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT,
+                                                true
+                                            )
+                                            putExtra(
+                                                RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT,
+                                                false
+                                            )
+                                        }
+                                    ringtonePickerLauncher.launch(intent)
+                                }
+                        ) {
+                            Column {
+                                Text(
+                                    stringResource(R.string.select_ringtone),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    currentRingtoneName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -377,17 +482,19 @@ fun TaskEditDialog(
                         TaskEntity(
                             id = task?.id ?: 0,
                             name = name,
-                            packageName = if (packageName.isBlank()) null else packageName,
-                            titlePattern = if (titlePattern.isBlank()) null else titlePattern,
-                            contentPattern = if (contentPattern.isBlank()) null else contentPattern,
+                            packageName = packageName.ifBlank { null },
+                            titlePattern = titlePattern.ifBlank { null },
+                            contentPattern = contentPattern.ifBlank { null },
                             isRegex = isRegex,
                             actionCancel = actionCancel,
                             actionTts = actionTts,
+                            actionAlarm = actionAlarm,
+                            alarmRingtone = alarmRingtone,
                             isEnabled = task?.isEnabled ?: true
                         )
                     )
                 },
-                enabled = name.isNotBlank() && (titlePattern.isNotBlank() || contentPattern.isNotBlank())
+                enabled = name.isNotBlank() && (titlePattern.isNotBlank() || contentPattern.isNotBlank() || actionCancel || actionTts || actionAlarm)
             ) {
                 Text(stringResource(R.string.confirm))
             }
@@ -469,4 +576,21 @@ fun AppPickerLoader(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TaskEditDialogPreview() {
+    MaterialTheme {
+        TaskEditDialog(
+            task = TaskEntity(
+                name = "Example Task",
+                packageName = "com.example.app",
+                titlePattern = "Alert",
+                actionAlarm = true
+            ),
+            onDismiss = {},
+            onConfirm = {}
+        )
+    }
 }

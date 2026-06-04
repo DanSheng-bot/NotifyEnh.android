@@ -33,6 +33,11 @@
     <string name="expand">展开</string>
     <string name="action_cancel_notif">取消通知</string>
     <string name="action_tts">TTS朗读</string>
+    <string name="action_alarm">持续响铃</string>
+    <string name="select_ringtone">选择铃声</string>
+    <string name="default_ringtone">默认</string>
+    <string name="alarm_active">提醒中: %1$s</string>
+    <string name="stop_alarm">停止</string>
     <string name="edit">编辑</string>
     <string name="delete">删除</string>
     <string name="edit_task">编辑任务</string>

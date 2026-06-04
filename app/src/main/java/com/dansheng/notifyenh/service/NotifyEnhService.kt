@@ -8,7 +8,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.media.AudioAttributes
+import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.speech.tts.TextToSpeech
@@ -35,10 +43,19 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
     companion object {
         private const val TAG = "NotifyEnhService"
         private const val CHANNEL_ID = "notify_enh_service_channel"
+        private const val ALARM_CHANNEL_ID = "notify_enh_alarm_channel"
         private const val NOTIFICATION_ID = 1001
+        private const val ALARM_NOTIFICATION_ID = 1002
+
+        private const val ACTION_STOP_ALARM = "com.dansheng.notifyenh.ACTION_STOP_ALARM"
+        private const val ACTION_SNOOZE_ALARM = "com.dansheng.notifyenh.ACTION_SNOOZE_ALARM"
+        private const val EXTRA_TASK_NAME = "extra_task_name"
 
         private val _isServiceRunning = MutableStateFlow(false)
         val isServiceRunning: StateFlow<Boolean> = _isServiceRunning.asStateFlow()
+
+        private val _isAlarmRinging = MutableStateFlow(false)
+        val isAlarmRinging: StateFlow<Boolean> = _isAlarmRinging.asStateFlow()
 
         private var instance: NotifyEnhService? = null
 
@@ -77,6 +94,35 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
     private lateinit var appPreferences: AppPreferences
     private var tts: TextToSpeech? = null
     private var isTtsInitialized = false
+
+    private var mediaPlayer: MediaPlayer? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var currentAlarmTaskName: String? = null
+    private var currentAlarmRingtone: String? = null
+
+    private val snoozeRunnable = Runnable {
+        currentAlarmTaskName?.let { startAlarm(it, currentAlarmRingtone) }
+    }
+
+    private val timeoutRunnable = Runnable {
+        if (mediaPlayer?.isPlaying == true) {
+            stopAlarm(isUserDismissed = false)
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_STOP_ALARM -> {
+                stopAlarm(isUserDismissed = true)
+            }
+
+            ACTION_SNOOZE_ALARM -> {
+                val taskName = intent.getStringExtra(EXTRA_TASK_NAME) ?: "Task"
+                startAlarm(taskName, currentAlarmRingtone)
+            }
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
 
     override fun onListenerConnected() {
         super.onListenerConnected()
@@ -150,6 +196,8 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
     }
 
     private fun createNotificationChannel() {
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.fg_channel_name),
@@ -157,8 +205,17 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         ).apply {
             description = getString(R.string.fg_channel_desc)
         }
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(channel)
+
+        val alarmChannel = NotificationChannel(
+            ALARM_CHANNEL_ID,
+            getString(R.string.action_alarm),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            setSound(null, null) // We handle sound ourselves
+            enableVibration(true)
+        }
+        manager.createNotificationChannel(alarmChannel)
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -279,6 +336,116 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
             val speechText = if (title.isNotBlank()) "$title: $content" else content
             tts?.speak(speechText, TextToSpeech.QUEUE_ADD, null, "notify_${sbn.postTime}")
         }
+
+        if (task.actionAlarm) {
+            startAlarm(task.name, task.alarmRingtone)
+        }
+    }
+
+    private fun startAlarm(taskName: String, ringtoneUri: String? = null) {
+        currentAlarmTaskName = taskName
+        currentAlarmRingtone = ringtoneUri
+        _isAlarmRinging.value = true
+        mainHandler.removeCallbacks(snoozeRunnable)
+        mainHandler.removeCallbacks(timeoutRunnable)
+
+        if (mediaPlayer == null) {
+            val alarmUri: Uri = if (ringtoneUri != null) {
+                Uri.parse(ringtoneUri)
+            } else {
+                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            }
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(this@NotifyEnhService, alarmUri)
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                isLooping = true
+                prepare()
+            }
+        }
+
+        if (mediaPlayer?.isPlaying == false) {
+            mediaPlayer?.start()
+        }
+
+        // Vibrate
+        val vibrator = getSystemService(Vibrator::class.java)
+        vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 500), 0))
+
+        showAlarmNotification(taskName)
+
+        // Auto stop after 1 minute if no response, then snooze for 5 minutes
+        mainHandler.postDelayed(timeoutRunnable, 60 * 1000)
+    }
+
+    private fun stopAlarm(isUserDismissed: Boolean) {
+        _isAlarmRinging.value = false
+        mediaPlayer?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare() // Prepare for next time
+            }
+        }
+
+        val vibrator = getSystemService(Vibrator::class.java)
+        vibrator.cancel()
+
+        if (isUserDismissed) {
+            mainHandler.removeCallbacks(snoozeRunnable)
+            mainHandler.removeCallbacks(timeoutRunnable)
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.cancel(ALARM_NOTIFICATION_ID)
+        } else {
+            // No response, schedule snooze for 5 minutes
+            mainHandler.postDelayed(snoozeRunnable, 5 * 60 * 1000)
+        }
+    }
+
+    private fun showAlarmNotification(taskName: String) {
+        val stopIntent = Intent(this, NotifyEnhService::class.java).apply {
+            action = ACTION_STOP_ALARM
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            0,
+            stopIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val fullScreenIntent =
+            Intent(this, com.dansheng.notifyenh.ui.AlarmActivity::class.java).apply {
+                putExtra(EXTRA_TASK_NAME, taskName)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
+            }
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            fullScreenIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(this, ALARM_CHANNEL_ID)
+            .setContentTitle(getString(R.string.action_alarm))
+            .setContentText(getString(R.string.alarm_active, taskName))
+            .setSmallIcon(R.drawable.ic_notification)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setOngoing(true)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                getString(R.string.stop_alarm),
+                stopPendingIntent
+            )
+            .build()
+
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.notify(ALARM_NOTIFICATION_ID, notification)
     }
 
     override fun onDestroy() {
@@ -287,5 +454,8 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         instance = null
         tts?.stop()
         tts?.shutdown()
+        mediaPlayer?.release()
+        mediaPlayer = null
+        mainHandler.removeCallbacksAndMessages(null)
     }
 }

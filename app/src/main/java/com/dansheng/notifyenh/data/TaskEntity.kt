@@ -14,10 +14,12 @@ data class TaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val packageName: String? = null,
-    val titlePattern: String? = null, // 新增：标题匹配模式
-    val contentPattern: String? = null, // 新增：内容匹配模式
+    val titlePattern: String? = null,
+    val contentPattern: String? = null,
     val isRegex: Boolean = false,
     val actionCancel: Boolean = false,
     val actionTts: Boolean = false,
+    val actionAlarm: Boolean = false,
+    val alarmRingtone: String? = null,
     val isEnabled: Boolean = true
 )
