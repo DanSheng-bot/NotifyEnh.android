@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.TaskEntity
@@ -445,7 +446,8 @@ fun TaskEditDialog(
                                             )
                                             putExtra(
                                                 RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
-                                                alarmRingtone?.let { Uri.parse(it) })
+                                                alarmRingtone?.toUri()
+                                            )
                                             putExtra(
                                                 RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT,
                                                 true

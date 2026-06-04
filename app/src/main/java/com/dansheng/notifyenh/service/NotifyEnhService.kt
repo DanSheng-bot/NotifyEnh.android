@@ -1,5 +1,6 @@
 package com.dansheng.notifyenh.service
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -22,6 +23,7 @@ import android.service.notification.StatusBarNotification
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import com.dansheng.notifyenh.MainActivity
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
@@ -350,12 +352,9 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         mainHandler.removeCallbacks(timeoutRunnable)
 
         if (mediaPlayer == null) {
-            val alarmUri: Uri = if (ringtoneUri != null) {
-                Uri.parse(ringtoneUri)
-            } else {
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-            }
+            val alarmUri: Uri = ringtoneUri?.toUri()
+                ?: (RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE))
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(this@NotifyEnhService, alarmUri)
                 setAudioAttributes(
@@ -406,6 +405,7 @@ class NotifyEnhService : NotificationListenerService(), TextToSpeech.OnInitListe
         }
     }
 
+    @SuppressLint("FullScreenIntentPolicy")
     private fun showAlarmNotification(taskName: String) {
         val stopIntent = Intent(this, NotifyEnhService::class.java).apply {
             action = ACTION_STOP_ALARM
