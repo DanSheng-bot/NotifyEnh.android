@@ -32,23 +32,24 @@ object BackupUtils {
         }
     }
 
-    suspend fun restoreFromAutoBackup(context: Context): Boolean {
+    suspend fun restoreFromAutoBackup(context: Context): Boolean? {
         return withContext(Dispatchers.IO) {
             try {
                 val backupFile = File(context.filesDir, AUTO_BACKUP_FILE_NAME)
-                if (!backupFile.exists()) return@withContext false
+                if (!backupFile.exists()) return@withContext null
 
                 val json = backupFile.readText()
                 val tasks = Json.decodeFromString<List<TaskEntity>>(json)
+                val hasAlarmTask = tasks.any { it.actionAlarm }
 
                 val database = AppDatabase.getDatabase(context)
                 // Clear ID to insert as new tasks if needed, or just insert
                 val newTasks = tasks.map { it.copy(id = 0) }
                 database.taskDao().insertAll(newTasks)
-                true
+                hasAlarmTask
             } catch (e: Exception) {
                 Log.e(TAG, "Restore from auto backup failed", e)
-                false
+                null
             }
         }
     }
@@ -70,20 +71,21 @@ object BackupUtils {
         }
     }
 
-    suspend fun importTasks(context: Context, uri: Uri): Result<Unit> {
+    suspend fun importTasks(context: Context, uri: Uri): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
                 val content = context.contentResolver.openInputStream(uri)?.use { stream ->
                     BufferedReader(InputStreamReader(stream)).readText()
                 }
                 val tasks = Json.decodeFromString<List<TaskEntity>>(content ?: "")
+                val hasAlarmTask = tasks.any { it.actionAlarm }
                 // 清除 ID 以便重新插入
                 val newTasks = tasks.map { taskEntity ->
                     taskEntity.copy(id = 0)
                 }
                 val database = AppDatabase.getDatabase(context)
                 database.taskDao().insertAll(newTasks)
-                Result.success(Unit)
+                Result.success(hasAlarmTask)
             } catch (e: Exception) {
                 Log.e(TAG, "Import tasks failed", e)
                 Result.failure(e)

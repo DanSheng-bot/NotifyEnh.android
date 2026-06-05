@@ -57,6 +57,7 @@
     <string name="permission_granted">已授权</string>
     <string name="permission_not_granted">未授权，点击去授权</string>
     <string name="alarm_permission_required">持续响铃功能需要“发送通知”权限，请在设置中开启。</string>
+    <string name="notif_permission_required">此功能需要“发送通知”权限以显示状态或提醒，请在设置中开启。</string>
     <string name="go_to_settings">去设置</string>
     <string name="full_screen_intent_permission">全屏界面显示权限</string>
     <string name="full_screen_intent_permission_desc">用于在响铃时自动弹出全屏控制界面</string>

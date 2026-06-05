@@ -57,6 +57,7 @@
     <string name="permission_granted">Granted</string>
     <string name="permission_not_granted">Not granted, click to authorize</string>
     <string name="alarm_permission_required">Alarm Ringing requires Post Notifications permission. Please enable it in Settings.</string>
+    <string name="notif_permission_required">This feature requires Post Notifications permission to display status or alerts. Please enable it in Settings.</string>
     <string name="go_to_settings">Go to Settings</string>
     <string name="full_screen_intent_permission">Full Screen Intent Permission</string>
     <string name="full_screen_intent_permission_desc">Required to show alarm screen automatically</string>

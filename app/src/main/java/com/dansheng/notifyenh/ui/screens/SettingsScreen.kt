@@ -105,6 +105,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val exportSuccessMsg = stringResource(R.string.export_success)
     val importCompletedMsg = stringResource(R.string.import_completed)
     val settingsSavedRestartMsg = stringResource(R.string.settings_saved_restart)
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    var permissionDialogText by remember { mutableStateOf("") }
+    val defaultPermissionText = stringResource(R.string.notif_permission_required)
+    val alarmPermissionText = stringResource(R.string.alarm_permission_required)
 
     // 导出 Launcher
     val exportLauncher = rememberLauncherForActivityResult(
@@ -138,6 +142,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 val result = BackupUtils.importTasks(context, it)
                 if (result.isSuccess) {
                     Toast.makeText(context, importCompletedMsg, Toast.LENGTH_SHORT).show()
+                    val hasAlarmTasks = result.getOrDefault(false)
+                    if (hasAlarmTasks && (!isPostNotifGranted || !isFullScreenIntentGranted)) {
+                        permissionDialogText = alarmPermissionText
+                        showPermissionDialog = true
+                    }
                 } else {
                     Toast.makeText(
                         context,
@@ -299,6 +308,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     Switch(
                         checked = persistentMode,
                         onCheckedChange = { enabled ->
+                            if (enabled && !isPostNotifGranted) {
+                                permissionDialogText = defaultPermissionText
+                                showPermissionDialog = true
+                            }
                             scope.launch {
                                 appPreferences.setPersistentMode(enabled)
                                 // 提示用户重启服务或自动处理
@@ -522,10 +535,14 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     .padding(horizontal = 8.dp)
                     .clickable {
                         scope.launch {
-                            val success = BackupUtils.restoreFromAutoBackup(context)
-                            if (success) {
+                            val hasAlarmTasks = BackupUtils.restoreFromAutoBackup(context)
+                            if (hasAlarmTasks != null) {
                                 Toast.makeText(context, importCompletedMsg, Toast.LENGTH_SHORT)
                                     .show()
+                                if (hasAlarmTasks && (!isPostNotifGranted || !isFullScreenIntentGranted)) {
+                                    permissionDialogText = alarmPermissionText
+                                    showPermissionDialog = true
+                                }
                             } else {
                                 Toast.makeText(
                                     context,
@@ -573,6 +590,33 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
             if (showChangelog) {
                 ChangelogDialog(onDismiss = { showChangelog = false })
+            }
+
+            if (showPermissionDialog) {
+                AlertDialog(
+                    onDismissRequest = { showPermissionDialog = false },
+                    title = { Text(stringResource(R.string.post_notif_permission)) },
+                    text = { Text(permissionDialogText) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showPermissionDialog = false
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                val intent =
+                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                    }
+                                context.startActivity(intent)
+                            }
+                        }) {
+                            Text(stringResource(R.string.go_to_settings))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showPermissionDialog = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    }
+                )
             }
 
             if (showSoftwareDesc) {
