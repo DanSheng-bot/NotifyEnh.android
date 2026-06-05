@@ -167,7 +167,7 @@ object AlarmUtils {
         )
 
         val notification = NotificationCompat.Builder(App.instance, ALARM_CHANNEL_ID)
-            .setContentTitle(App.instance.getString(R.string.action_alarm))
+            .setContentTitle(App.instance.getString(R.string.alarm_title))
             .setContentText(App.instance.getString(R.string.alarm_active, taskName))
             .setSmallIcon(R.drawable.ic_notification)
             .setPriority(NotificationCompat.PRIORITY_MAX)

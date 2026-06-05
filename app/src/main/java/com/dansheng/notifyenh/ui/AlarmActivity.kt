@@ -123,7 +123,7 @@ fun AlarmContent(taskName: String, onStop: () -> Unit) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.action_alarm),
+            text = stringResource(R.string.alarm_title),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onErrorContainer,
             fontWeight = FontWeight.Bold

@@ -61,6 +61,7 @@
     <string name="go_to_settings">Go to Settings</string>
     <string name="full_screen_intent_permission">Full Screen Intent Permission</string>
     <string name="full_screen_intent_permission_desc">Required to show alarm screen automatically</string>
+    <string name="alarm_title">Notification reminder</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
