@@ -6,6 +6,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -298,6 +300,7 @@ fun TaskEditDialog(
     var alarmRingtone by remember { mutableStateOf(task?.alarmRingtone) }
 
     var showAppPicker by remember { mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
@@ -322,6 +325,58 @@ fun TaskEditDialog(
                 context.getString(R.string.default_ringtone)
             }
         }
+    }
+
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDialog = false },
+            title = { Text(stringResource(R.string.post_notif_permission)) },
+            text = { Text(stringResource(R.string.alarm_permission_required)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPermissionDialog = false
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                        context.startActivity(intent)
+                    }
+                }) {
+                    Text(stringResource(R.string.go_to_settings))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (showPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDialog = false },
+            title = { Text(stringResource(R.string.post_notif_permission)) },
+            text = { Text(stringResource(R.string.alarm_permission_required)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPermissionDialog = false
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                        context.startActivity(intent)
+                    }
+                }) {
+                    Text(stringResource(R.string.go_to_settings))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     AlertDialog(
@@ -428,9 +483,24 @@ fun TaskEditDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { actionAlarm = !actionAlarm }
+                            .clickable {
+                                if (!actionAlarm && !isPostNotificationsPermissionGranted(context)) {
+                                    showPermissionDialog = true
+                                } else {
+                                    actionAlarm = !actionAlarm
+                                }
+                            }
                     ) {
-                        Checkbox(checked = actionAlarm, onCheckedChange = { actionAlarm = it })
+                        Checkbox(
+                            checked = actionAlarm,
+                            onCheckedChange = {
+                                if (it && !isPostNotificationsPermissionGranted(context)) {
+                                    showPermissionDialog = true
+                                } else {
+                                    actionAlarm = it
+                                }
+                            }
+                        )
                         Text(stringResource(R.string.action_alarm))
                     }
 
@@ -495,12 +565,16 @@ fun TaskEditDialog(
                             }
 
                             IconButton(onClick = {
-                                val testTask = TaskEntity(
-                                    name = name.ifBlank { context.getString(R.string.action_alarm) },
-                                    alarmRingtone = alarmRingtone,
-                                    actionAlarm = true
-                                )
-                                AlarmUtils.startAlarm(testTask)
+                                if (!isPostNotificationsPermissionGranted(context)) {
+                                    showPermissionDialog = true
+                                } else {
+                                    val testTask = TaskEntity(
+                                        name = name.ifBlank { context.getString(R.string.action_alarm) },
+                                        alarmRingtone = alarmRingtone,
+                                        actionAlarm = true
+                                    )
+                                    AlarmUtils.startAlarm(testTask)
+                                }
                             }) {
                                 Icon(
                                     Icons.Default.Notifications,

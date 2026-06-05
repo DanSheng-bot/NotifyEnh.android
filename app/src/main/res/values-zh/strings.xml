@@ -52,6 +52,12 @@
     <string name="new_task">新任务</string>
     <string name="reset_default">恢复默认</string>
     <string name="test_alarm">测试响铃</string>
+    <string name="post_notif_permission">通知显示权限</string>
+    <string name="post_notif_permission_desc">用于显示响铃通知及服务状态</string>
+    <string name="permission_granted">已授权</string>
+    <string name="permission_not_granted">未授权，点击去授权</string>
+    <string name="alarm_permission_required">持续响铃功能需要“发送通知”权限，请在设置中开启。</string>
+    <string name="go_to_settings">去设置</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">设置</string>

@@ -1,10 +1,13 @@
 package com.dansheng.notifyenh.ui.screens
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.text.TextUtils
 import android.widget.Toast
@@ -12,12 +15,18 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -32,10 +41,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -46,6 +57,7 @@ import com.dansheng.notifyenh.data.prefs.AppPreferences
 import com.dansheng.notifyenh.data.prefs.ThemeMode
 import com.dansheng.notifyenh.service.NotifyEnhService
 import com.dansheng.notifyenh.ui.components.ChangelogDialog
+import com.dansheng.notifyenh.util.AlarmUtils
 import com.dansheng.notifyenh.util.BackupUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,14 +81,17 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val persistentMode by appPreferences.persistentModeFlow.collectAsState(initial = false)
     val retentionDays by appPreferences.retentionDaysFlow.collectAsState(initial = 7)
     var isPermissionGranted by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
+    var isPostNotifGranted by remember { mutableStateOf(isPostNotificationsPermissionGranted(context)) }
     val isServiceRunning by NotifyEnhService.isServiceRunning.collectAsState()
     var isIgnoringBattery by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
+    val isAlarmRinging by AlarmUtils.isAlarmRinging.collectAsState()
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 isPermissionGranted = isNotificationServiceEnabled(context)
+                isPostNotifGranted = isPostNotificationsPermissionGranted(context)
                 isIgnoringBattery = isIgnoringBatteryOptimizations(context)
             }
         }
@@ -157,11 +172,30 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val scrollState = rememberScrollState()
 
     Column(modifier = modifier.fillMaxSize()) {
-        Text(
-            text = stringResource(R.string.settings_title),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(16.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.settings_title),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .weight(1f)
+            )
+
+            if (isAlarmRinging) {
+                IconButton(onClick = { AlarmUtils.stopAlarm(isUserDismissed = true) }) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = stringResource(R.string.stop_alarm),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
 
         Column(
             modifier = Modifier
@@ -195,6 +229,40 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     )
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
+            )
+
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.post_notif_permission)) },
+                supportingContent = {
+                    Text(
+                        if (isPostNotifGranted) stringResource(R.string.permission_granted)
+                        else stringResource(R.string.permission_not_granted)
+                    )
+                },
+                trailingContent = {
+                    Switch(
+                        checked = isPostNotifGranted,
+                        onCheckedChange = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                val intent =
+                                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                    }
+                                context.startActivity(intent)
+                            }
+                        }
+                    )
+                },
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable {
+                        if (!isPostNotifGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            }
+                            context.startActivity(intent)
+                        }
+                    }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -502,6 +570,17 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
+}
+
+fun isPostNotificationsPermissionGranted(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        true
     }
 }
 

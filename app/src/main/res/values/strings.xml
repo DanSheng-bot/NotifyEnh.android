@@ -52,6 +52,12 @@
     <string name="new_task">New Task</string>
     <string name="reset_default">Restore Default</string>
     <string name="test_alarm">Test Alarm</string>
+    <string name="post_notif_permission">Post Notifications Permission</string>
+    <string name="post_notif_permission_desc">Required to show alarm and service status notifications</string>
+    <string name="permission_granted">Granted</string>
+    <string name="permission_not_granted">Not granted, click to authorize</string>
+    <string name="alarm_permission_required">Alarm Ringing requires Post Notifications permission. Please enable it in Settings.</string>
+    <string name="go_to_settings">Go to Settings</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
