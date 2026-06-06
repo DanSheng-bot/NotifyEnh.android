@@ -26,22 +26,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dansheng.notifyenh.R
-import com.dansheng.notifyenh.data.AppDatabase
-import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.service.NotifyEnhService
 import com.dansheng.notifyenh.ui.theme.NotifyEnhTheme
 import com.dansheng.notifyenh.util.AlarmUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class AlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,21 +42,9 @@ class AlarmActivity : ComponentActivity() {
         Log.d("AlarmActivity", "onCreate")
         turnScreenOnAndKeyguardOff()
 
-        val taskId = intent.getLongExtra(AlarmUtils.EXTRA_TASK_ID, -1L)
-
         setContent {
             NotifyEnhTheme {
                 val isRinging by AlarmUtils.isAlarmRinging.collectAsState()
-                var task by remember { mutableStateOf<TaskEntity?>(null) }
-
-                LaunchedEffect(taskId) {
-                    if (taskId != -1L) {
-                        val db = AppDatabase.getDatabase(this@AlarmActivity)
-                        task = withContext(Dispatchers.IO) {
-                            db.taskDao().getTaskById(taskId)
-                        }
-                    }
-                }
 
                 LaunchedEffect(isRinging) {
                     if (!isRinging) {
@@ -76,7 +57,6 @@ class AlarmActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.errorContainer
                 ) {
                     AlarmContent(
-                        taskName = task?.name ?: stringResource(R.string.action_alarm),
                         onStop = {
                             stopAlarm()
                         }
@@ -105,7 +85,9 @@ class AlarmActivity : ComponentActivity() {
 }
 
 @Composable
-fun AlarmContent(taskName: String, onStop: () -> Unit) {
+fun AlarmContent(onStop: () -> Unit) {
+    val alarmMsgList by AlarmUtils.alarmMsgList.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -132,7 +114,7 @@ fun AlarmContent(taskName: String, onStop: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = taskName,
+            text = alarmMsgList.joinToString("\n"),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onErrorContainer
         )

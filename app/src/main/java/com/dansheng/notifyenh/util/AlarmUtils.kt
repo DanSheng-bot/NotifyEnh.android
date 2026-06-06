@@ -23,6 +23,8 @@ import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.service.NotifyEnhService
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,10 +43,10 @@ object AlarmUtils {
 
     private val _isAlarmRinging = MutableStateFlow(false)
     val isAlarmRinging: StateFlow<Boolean> = _isAlarmRinging.asStateFlow()
+    private val _alarmMsgList = MutableStateFlow<PersistentList<String>>(persistentListOf())
+    val alarmMsgList: StateFlow<PersistentList<String>> = _alarmMsgList.asStateFlow()
 
     const val ACTION_STOP_ALARM = "com.dansheng.notifyenh.ACTION_STOP_ALARM"
-    const val ACTION_SNOOZE_ALARM = "com.dansheng.notifyenh.ACTION_SNOOZE_ALARM"
-    const val EXTRA_TASK_ID = "extra_task_id"
 
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmTaskId: Long? = null
@@ -75,6 +77,9 @@ object AlarmUtils {
 
     fun startAlarm(taskEntity: TaskEntity) {
         currentAlarmTaskId = taskEntity.id
+        if (!_alarmMsgList.value.contains(taskEntity.name)) {
+            _alarmMsgList.value = _alarmMsgList.value.add(taskEntity.name)
+        }
         Log.d(TAG, "Starting alarm for task: ${taskEntity.name}")
         _isAlarmRinging.value = true
         mainHandler.removeCallbacks(snoozeRunnable)
@@ -110,7 +115,7 @@ object AlarmUtils {
             vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 500), 0))
             Log.d(TAG, "Vibration started")
 
-            showAlarmNotification(taskEntity)
+            showAlarmNotification()
         } catch (e: Exception) {
             Log.e(TAG, "Error starting alarm", e)
         }
@@ -121,12 +126,10 @@ object AlarmUtils {
 
     fun stopAlarm(isUserDismissed: Boolean) {
         _isAlarmRinging.value = false
-        mediaPlayer?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare() // Prepare for next time
-            }
-        }
+        _alarmMsgList.value = _alarmMsgList.value.clear()
+        currentAlarmTaskId = null
+
+        mediaPlayer?.release()
 
         val vibrator = App.instance.getSystemService(Vibrator::class.java)
         vibrator.cancel()
@@ -143,10 +146,7 @@ object AlarmUtils {
     }
 
     @SuppressLint("FullScreenIntentPolicy")
-    fun showAlarmNotification(taskEntity: TaskEntity) {
-        val taskName = taskEntity.name
-        Log.d(TAG, "Showing alarm notification for: $taskName")
-
+    fun showAlarmNotification() {
         val stopIntent = Intent(App.instance, NotifyEnhService::class.java).apply {
             action = ACTION_STOP_ALARM
         }
@@ -159,7 +159,6 @@ object AlarmUtils {
 
         val fullScreenIntent =
             Intent(App.instance, com.dansheng.notifyenh.ui.AlarmActivity::class.java).apply {
-                putExtra(EXTRA_TASK_ID, taskEntity.id)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
             }
         val fullScreenPendingIntent = PendingIntent.getActivity(
@@ -172,7 +171,12 @@ object AlarmUtils {
         val notification = NotificationCompat.Builder(App.instance, ALARM_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(App.instance.getString(R.string.alarm_title))
-            .setContentText(App.instance.getString(R.string.alarm_active, taskName))
+            .setContentText(
+                App.instance.getString(
+                    R.string.alarm_active,
+                    alarmMsgList.value.joinToString(",")
+                )
+            )
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setOngoing(true)
