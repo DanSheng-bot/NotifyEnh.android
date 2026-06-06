@@ -69,7 +69,6 @@ object AlarmUtils {
                 database.taskDao().getTaskById(taskId)
             }
             taskEntity?.let {
-                currentAlarmTaskId = taskId
                 startAlarm(it)
             }
         }
@@ -126,15 +125,16 @@ object AlarmUtils {
 
     fun stopAlarm(isUserDismissed: Boolean) {
         _isAlarmRinging.value = false
-        _alarmMsgList.value = _alarmMsgList.value.clear()
-        currentAlarmTaskId = null
 
         mediaPlayer?.release()
+        mediaPlayer = null
 
         val vibrator = App.instance.getSystemService(Vibrator::class.java)
         vibrator.cancel()
 
         if (isUserDismissed) {
+            _alarmMsgList.value = _alarmMsgList.value.clear()
+            currentAlarmTaskId = null
             mainHandler.removeCallbacks(snoozeRunnable)
             mainHandler.removeCallbacks(timeoutRunnable)
             val manager = App.instance.getSystemService(NotificationManager::class.java)
