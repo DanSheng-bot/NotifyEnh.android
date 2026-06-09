@@ -3,8 +3,10 @@ package com.dansheng.notifyenh.util
 import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
@@ -50,6 +52,17 @@ object AlarmUtils {
 
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmTaskId: Long? = null
+
+    private val volumeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == "android.media.VOLUME_CHANGED_ACTION") {
+                if (_isAlarmRinging.value) {
+                    Log.d(TAG, "Volume key pressed (detected via broadcast), stopping alarm")
+                    stopAlarm(isUserDismissed = true)
+                }
+            }
+        }
+    }
 
 
     private val snoozeRunnable = Runnable {
@@ -115,6 +128,10 @@ object AlarmUtils {
             Log.d(TAG, "Vibration started")
 
             showAlarmNotification()
+
+            // Register volume observer when alarm starts
+            val filter = IntentFilter("android.media.VOLUME_CHANGED_ACTION")
+            App.instance.registerReceiver(volumeReceiver, filter)
         } catch (e: Exception) {
             Log.e(TAG, "Error starting alarm", e)
         }
@@ -124,6 +141,13 @@ object AlarmUtils {
     }
 
     fun stopAlarm(isUserDismissed: Boolean) {
+        if (_isAlarmRinging.value) {
+            try {
+                App.instance.unregisterReceiver(volumeReceiver)
+            } catch (_: Exception) {
+            }
+        }
+
         _isAlarmRinging.value = false
 
         mediaPlayer?.release()
