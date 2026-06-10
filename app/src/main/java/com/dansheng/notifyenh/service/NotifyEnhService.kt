@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -78,6 +80,12 @@ class NotifyEnhService : NotificationListenerService() {
 
     // 内存中的通知查重缓存，Key: pkg|title|content, Value: postTime
     private val notificationCache = ConcurrentHashMap<String, Long>()
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    private val cleanNotificationCacheRunnable = Runnable {
+        cleanNotificationCache()
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -165,7 +173,7 @@ class NotifyEnhService : NotificationListenerService() {
 
             // 更新缓存并清理
             notificationCache[cacheKey] = postTime
-            cleanNotificationCache(postTime)
+            mainHandler.postDelayed(cleanNotificationCacheRunnable, 5000)
 
             // 4. 存入数据库
             val entity = NotificationEntity(
@@ -202,12 +210,12 @@ class NotifyEnhService : NotificationListenerService() {
         }
     }
 
-    private fun cleanNotificationCache(currentTime: Long) {
+    private fun cleanNotificationCache() {
         // 定期清理超过 5 秒的缓存，防止内存无限增长
         val iterator = notificationCache.entries.iterator()
         while (iterator.hasNext()) {
             val entry = iterator.next()
-            if (currentTime - entry.value > 5000) {
+            if (System.currentTimeMillis() - entry.value > 5000) {
                 iterator.remove()
             }
         }
