@@ -13,7 +13,7 @@ fun getGitCommitCount(): Int {
     val process = ProcessBuilder("git", "rev-list", "--count", "HEAD").start()
     return try {
         process.inputStream.bufferedReader().readLine()?.trim()?.toInt() ?: 1
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         1
     }
 }
