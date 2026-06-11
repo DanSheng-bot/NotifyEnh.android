@@ -53,6 +53,9 @@ object AlarmUtils {
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmTaskId: Long? = null
 
+    /**
+     * 音量键按下广播接收器
+     */
     private val volumeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == "android.media.VOLUME_CHANGED_ACTION") {
