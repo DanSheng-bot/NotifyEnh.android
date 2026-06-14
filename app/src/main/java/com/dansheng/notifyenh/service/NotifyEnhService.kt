@@ -27,12 +27,14 @@ import com.dansheng.notifyenh.util.TTS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 class NotifyEnhService : NotificationListenerService() {
 
@@ -171,6 +173,10 @@ class NotifyEnhService : NotificationListenerService() {
 
             // 2. 无论是否重复，如果任务要求取消通知，则立即执行取消
             if (triggeredTask?.actionCancel == true) {
+                Log.d(TAG, "Action: Cancel notification ${sbn.key}")
+                cancelNotification(sbn.key)
+                // 针对部分系统可能存在的延迟，200ms 后再试一次
+                delay(200.milliseconds)
                 cancelNotification(sbn.key)
             }
 

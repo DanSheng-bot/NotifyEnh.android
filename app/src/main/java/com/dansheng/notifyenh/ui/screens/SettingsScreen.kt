@@ -56,6 +56,7 @@ import com.dansheng.notifyenh.data.prefs.AppPreferences
 import com.dansheng.notifyenh.data.prefs.ThemeMode
 import com.dansheng.notifyenh.service.NotifyEnhService
 import com.dansheng.notifyenh.ui.components.ChangelogDialog
+import com.dansheng.notifyenh.ui.components.LogDialog
 import com.dansheng.notifyenh.util.AlarmUtils
 import com.dansheng.notifyenh.util.BackupUtils
 import kotlinx.coroutines.launch
@@ -565,6 +566,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
             var showChangelog by remember { mutableStateOf(false) }
             var showSoftwareDesc by remember { mutableStateOf(false) }
+            var showLogs by remember { mutableStateOf(false) }
 
             ListItem(
                 headlineContent = { Text(stringResource(R.string.software_desc)) },
@@ -588,8 +590,20 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     .clickable { showChangelog = true }
             )
 
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.view_logs)) },
+                supportingContent = { Text(stringResource(R.string.view_logs_desc)) },
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable { showLogs = true }
+            )
+
             if (showChangelog) {
                 ChangelogDialog(onDismiss = { showChangelog = false })
+            }
+
+            if (showLogs) {
+                LogDialog(onDismiss = { showLogs = false })
             }
 
             if (showPermissionDialog) {

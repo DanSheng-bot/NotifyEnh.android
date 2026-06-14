@@ -104,6 +104,8 @@
     <string name="about">关于</string>
     <string name="changelog">更新日志</string>
     <string name="changelog_desc">查看最近的版本更新内容</string>
+    <string name="view_logs">查看日志</string>
+    <string name="view_logs_desc">查看系统日志以便调试</string>
     <string name="software_desc">软件说明</string>
     <string name="software_desc_detail">通知增强 (NotifyEnh) 是一款旨在提升 Android 通知处理效率的工具。\n\n核心功能：\n• 通知记录：自动保存系统通知历史，支持快速搜索。\n• 自动化任务：根据应用、标题或内容创建匹配规则。\n• 自动执行：匹配后可自动清除通知、通过 TTS 语音朗读或触发持续响铃。\n• 持续响铃 (Alarm)：关键通知可触发持续响铃与振动，支持全屏提醒与自定义铃声，确保重要信息不被遗漏。\n• 灵活管理：支持常驻通知过滤、记录自动清理及数据备份。</string>
 
