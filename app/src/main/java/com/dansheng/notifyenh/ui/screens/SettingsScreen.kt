@@ -591,8 +591,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
 
             ListItem(
-                headlineContent = { Text(stringResource(R.string.view_logs)) },
-                supportingContent = { Text(stringResource(R.string.view_logs_desc)) },
+                headlineContent = { Text(stringResource(R.string.debug_logs)) },
+                supportingContent = { Text(stringResource(R.string.debug_logs_desc)) },
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .clickable { showLogs = true }

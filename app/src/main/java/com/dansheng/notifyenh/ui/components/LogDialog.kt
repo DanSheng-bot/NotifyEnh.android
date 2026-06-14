@@ -64,7 +64,7 @@ fun LogDialog(onDismiss: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        title = { Text(stringResource(R.string.view_logs)) },
+        title = { Text(stringResource(R.string.debug_logs)) },
         text = {
             Box(modifier = Modifier.fillMaxSize()) {
                 if (isLoading) {
