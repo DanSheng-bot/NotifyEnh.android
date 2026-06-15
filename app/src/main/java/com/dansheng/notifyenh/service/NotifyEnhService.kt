@@ -202,8 +202,8 @@ class NotifyEnhService : NotificationListenerService() {
             )
             database.notificationDao().insert(entity)
 
-            // 清理旧通知
-            cleanupOldNotifications()
+            // 清理数据
+            cleanupOldData()
 
             // 5. 执行剩余操作 (TTS, 响铃)
             triggeredTask?.let {
@@ -253,7 +253,7 @@ class NotifyEnhService : NotificationListenerService() {
         return null
     }
 
-    private suspend fun cleanupOldNotifications() {
+    private suspend fun cleanupOldData() {
         try {
             val now = System.currentTimeMillis()
             val lastCleanup = appPreferences.lastCleanupTimeFlow.first()
@@ -266,6 +266,7 @@ class NotifyEnhService : NotificationListenerService() {
             val days = appPreferences.retentionDaysFlow.first()
             val cutoff = now - (days * 24L * 60L * 60L * 1000L)
             database.notificationDao().deleteOldNotifications(cutoff)
+            database.logDao().deleteOldLogs(now - 24L * 60L * 60L * 1000L)
 
             // 更新最后清理时间
             appPreferences.setLastCleanupTime(now)
