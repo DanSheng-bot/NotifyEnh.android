@@ -19,7 +19,7 @@ object DbMigrations {
 
     private val MIGRATION_6_7 = object : Migration(6, 7) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            db.execSQL("CREATE TABLE IF NOT EXISTS `app_logs` (`id` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `time` INTEGER NOT NULL, `message` TEXT NOT NULL, `stackTrace` TEXT)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS `app_logs` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `time` INTEGER NOT NULL, `message` TEXT NOT NULL, `stackTrace` TEXT)")
         }
     }
 
