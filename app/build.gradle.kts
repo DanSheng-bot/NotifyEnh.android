@@ -33,6 +33,7 @@ android {
     defaultConfig {
         applicationId = "com.dansheng.notifyenh"
         minSdk = 30
+        //noinspection OldTargetApi
         targetSdk = 36
         versionCode = getGitCommitCount()
         versionName = getVersionName()
