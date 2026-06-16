@@ -179,16 +179,17 @@ class NotifyEnhService : NotificationListenerService() {
             return
         }
 
-        val notifyDelay = System.currentTimeMillis() - postTime
-        if (notifyDelay > 3000) {
-            LogUtils.d("通知触发延迟${notifyDelay}毫秒,${title}|${content}")
-        }
-
         // 存入数据库及处理任务
         serviceScope.launch {
             // 1. 先匹配任务，获取触发规则
             val triggeredTask = findTriggeredTask(sbn, title, content)
 
+            if (triggeredTask != null) {
+                val notifyDelay = System.currentTimeMillis() - postTime
+                if (notifyDelay > 3000) {
+                    LogUtils.d("通知触发延迟${notifyDelay}毫秒,${title}|${content}")
+                }
+            }
 
             // 2. 无论是否重复，如果任务要求取消通知，则立即执行取消
             if (triggeredTask?.actionCancel == true) {
