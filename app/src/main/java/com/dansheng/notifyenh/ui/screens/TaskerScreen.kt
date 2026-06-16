@@ -167,20 +167,26 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                                 isLast = index == tasksInGroup.size - 1,
                                 onMoveUp = {
                                     scope.launch {
-                                        val prevTask = tasksInGroup[index - 1]
-                                        database.taskDao()
-                                            .update(task.copy(sortOrder = prevTask.sortOrder))
-                                        database.taskDao()
-                                            .update(prevTask.copy(sortOrder = task.sortOrder))
+                                        val newList = tasksInGroup.toMutableList()
+                                        val item = newList.removeAt(index)
+                                        newList.add(index - 1, item)
+                                        // 重新分配整个分组的排序序号，确保唯一性且修复旧数据的 0 值问题
+                                        val updatedTasks = newList.mapIndexed { i, t ->
+                                            t.copy(sortOrder = i)
+                                        }
+                                        database.taskDao().insertAll(updatedTasks)
                                     }
                                 },
                                 onMoveDown = {
                                     scope.launch {
-                                        val nextTask = tasksInGroup[index + 1]
-                                        database.taskDao()
-                                            .update(task.copy(sortOrder = nextTask.sortOrder))
-                                        database.taskDao()
-                                            .update(nextTask.copy(sortOrder = task.sortOrder))
+                                        val newList = tasksInGroup.toMutableList()
+                                        val item = newList.removeAt(index)
+                                        newList.add(index + 1, item)
+                                        // 同上，重新分配序号
+                                        val updatedTasks = newList.mapIndexed { i, t ->
+                                            t.copy(sortOrder = i)
+                                        }
+                                        database.taskDao().insertAll(updatedTasks)
                                     }
                                 },
                                 onEdit = { taskToEdit = it },
