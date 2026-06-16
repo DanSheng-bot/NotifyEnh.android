@@ -21,5 +21,6 @@ data class TaskEntity(
     val actionTts: Boolean = false,
     val actionAlarm: Boolean = false,
     val alarmRingtone: String? = null,
-    val isEnabled: Boolean = true
+    val isEnabled: Boolean = true,
+    val sortOrder: Int = 0
 )

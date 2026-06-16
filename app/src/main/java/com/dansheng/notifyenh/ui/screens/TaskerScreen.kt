@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -157,9 +156,32 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                     }
 
                     if (isExpanded) {
-                        items(tasksInGroup, key = { it.id }) { task ->
+                        items(
+                            tasksInGroup.size,
+                            key = { index -> tasksInGroup[index].id }) { index ->
+                            val task = tasksInGroup[index]
                             TaskItem(
                                 task = task,
+                                isFirst = index == 0,
+                                isLast = index == tasksInGroup.size - 1,
+                                onMoveUp = {
+                                    scope.launch {
+                                        val prevTask = tasksInGroup[index - 1]
+                                        database.taskDao()
+                                            .update(task.copy(sortOrder = prevTask.sortOrder))
+                                        database.taskDao()
+                                            .update(prevTask.copy(sortOrder = task.sortOrder))
+                                    }
+                                },
+                                onMoveDown = {
+                                    scope.launch {
+                                        val nextTask = tasksInGroup[index + 1]
+                                        database.taskDao()
+                                            .update(task.copy(sortOrder = nextTask.sortOrder))
+                                        database.taskDao()
+                                            .update(nextTask.copy(sortOrder = task.sortOrder))
+                                    }
+                                },
                                 onEdit = { taskToEdit = it },
                                 onToggle = { enabled ->
                                     scope.launch {
@@ -191,9 +213,10 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
             onConfirm = { newTask ->
                 scope.launch {
                     if (taskToEdit != null) {
-                        database.taskDao().update(newTask)
+                        database.taskDao().update(newTask.copy(sortOrder = taskToEdit!!.sortOrder))
                     } else {
-                        database.taskDao().insert(newTask)
+                        val maxOrder = database.taskDao().getMaxSortOrder(newTask.packageName) ?: 0
+                        database.taskDao().insert(newTask.copy(sortOrder = maxOrder + 1))
                     }
                     BackupUtils.autoBackup(context)
                     showAddDialog = false
@@ -207,6 +230,10 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
 @Composable
 fun TaskItem(
     task: TaskEntity,
+    isFirst: Boolean,
+    isLast: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
     onEdit: (TaskEntity) -> Unit,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit
@@ -248,6 +275,14 @@ fun TaskItem(
                     }
                 }
             }
+
+            IconButton(onClick = onMoveUp, enabled = !isFirst) {
+                Icon(Icons.Default.KeyboardArrowUp, contentDescription = null)
+            }
+            IconButton(onClick = onMoveDown, enabled = !isLast) {
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+            }
+
             IconButton(onClick = { onEdit(task) }) {
                 Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
             }

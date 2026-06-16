@@ -10,17 +10,20 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM tasks")
+    @Query("SELECT * FROM tasks ORDER BY sortOrder ASC")
     fun getAllTasks(): Flow<List<TaskEntity>>
 
-    @Query("SELECT * FROM tasks WHERE isEnabled = 1")
+    @Query("SELECT * FROM tasks WHERE isEnabled = 1 ORDER BY sortOrder ASC")
     suspend fun getEnabledTasks(): List<TaskEntity>
 
-    @Query("SELECT * FROM tasks WHERE isEnabled = 1 AND (packageName = :pkgName OR packageName IS NULL OR packageName = '')")
+    @Query("SELECT * FROM tasks WHERE isEnabled = 1 AND (packageName = :pkgName OR packageName IS NULL OR packageName = '') ORDER BY sortOrder ASC")
     suspend fun getEnabledTasksForPackage(pkgName: String): List<TaskEntity>
 
-    @Query("SELECT * FROM tasks")
+    @Query("SELECT * FROM tasks ORDER BY sortOrder ASC")
     suspend fun getAllTasksList(): List<TaskEntity>
+
+    @Query("SELECT MAX(sortOrder) FROM tasks WHERE (packageName = :pkgName OR (packageName IS NULL AND (:pkgName IS NULL OR :pkgName = '')))")
+    suspend fun getMaxSortOrder(pkgName: String?): Int?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(tasks: List<TaskEntity>)
