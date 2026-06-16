@@ -12,7 +12,6 @@ import android.os.Looper
 import android.os.PowerManager
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.dansheng.notifyenh.App.Companion.CHANNEL_ID
 import com.dansheng.notifyenh.App.Companion.NOTIFICATION_ID
@@ -42,7 +41,6 @@ import kotlin.time.Duration.Companion.milliseconds
 class NotifyEnhService : NotificationListenerService() {
 
     companion object {
-        private const val TAG = "NotifyEnhService"
 
         private val _isServiceRunning = MutableStateFlow(false)
         val isServiceRunning: StateFlow<Boolean> = _isServiceRunning.asStateFlow()
@@ -92,7 +90,7 @@ class NotifyEnhService : NotificationListenerService() {
 
     // 内存中的通知查重缓存，Key: pkg|title|content, Value: postTime
     private val notificationCache = ConcurrentHashMap<String, Long>()
-
+    private var lastCleanupTime = 0L
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val cleanNotificationCacheRunnable = Runnable {
@@ -151,8 +149,6 @@ class NotifyEnhService : NotificationListenerService() {
             "NotifyEnh:NotificationProcessing"
         )
     }
-
-    private var lastCleanupTime = 0L
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
@@ -228,7 +224,7 @@ class NotifyEnhService : NotificationListenerService() {
 
                 // 只有距离上次尝试清理超过 1 小时，才检查是否需要执行数据清理
                 val now = System.currentTimeMillis()
-                if (now - lastCleanupTime > 3600000) {
+                if (now - lastCleanupTime > 1.days.inWholeMilliseconds) {
                     lastCleanupTime = now
                     cleanupOldData()
                 }
@@ -299,9 +295,9 @@ class NotifyEnhService : NotificationListenerService() {
 
             // 更新最后清理时间
             appPreferences.setLastCleanupTime(now)
-            Log.d(TAG, "Old notifications cleaned up successfully")
+            LogUtils.d("Old notifications cleaned up successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to cleanup old notifications", e)
+            LogUtils.e("Failed to cleanup old notifications", e)
         }
     }
 

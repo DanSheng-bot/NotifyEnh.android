@@ -15,6 +15,15 @@ object LogUtils {
 
     fun d(message: String, throwable: Throwable? = null) {
         Log.d("NotifyEnh", message, throwable)
+        logToDb(message, throwable)
+    }
+
+    fun e(message: String, throwable: Throwable? = null) {
+        Log.e("NotifyEnh", message, throwable)
+        logToDb(message, throwable)
+    }
+
+    fun logToDb(message: String, throwable: Throwable? = null) {
         scope.launch(Dispatchers.IO) {
             AppDatabase.getDatabase(App.instance).logDao()
                 .insert(

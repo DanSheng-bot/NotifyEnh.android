@@ -133,7 +133,7 @@ object AlarmUtils {
             val filter = IntentFilter("android.media.VOLUME_CHANGED_ACTION")
             App.instance.registerReceiver(volumeReceiver, filter)
         } catch (e: Exception) {
-            LogUtils.d("Error starting alarm", e)
+            LogUtils.e("Error starting alarm", e)
         }
 
         // Auto stop after 1 minute if no response, then snooze for 5 minutes
