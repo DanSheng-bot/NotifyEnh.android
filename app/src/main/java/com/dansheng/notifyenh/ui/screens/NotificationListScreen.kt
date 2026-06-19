@@ -30,13 +30,18 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,7 +79,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationListScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -128,8 +133,11 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
     // 这样应用关闭重新打开时，滚动位置会自动重置到顶端
     val listState = remember { LazyListState() }
     var notificationToTask by remember { mutableStateOf<NotificationEntity?>(null) }
+    var menuNotification by remember { mutableStateOf<NotificationEntity?>(null) }
     var showMoreMenu by remember { mutableStateOf(false) }
     var showClearConfirm by remember { mutableStateOf(false) }
+
+    val sheetState = rememberModalBottomSheetState()
 
     Column(modifier = modifier.fillMaxSize()) {
         Row(
@@ -230,31 +238,8 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                                     if (actualItem != null) {
                                         NotificationItem(
                                             notification = actualItem.notification,
-                                            onDelete = {
-                                                scope.launch {
-                                                    database.notificationDao()
-                                                        .delete(actualItem.notification)
-                                                }
-                                            },
-                                            onSnooze = {
-                                                it.notificationKey?.let { key ->
-                                                    NotifyEnhService.snoozeNotification(
-                                                        key,
-                                                        3600000
-                                                    ) // 1 hour
-                                                }
-                                            },
-                                            onCreateTask = {
-                                                notificationToTask = it
-                                            },
-                                            onOpenApp = {
-                                                val launchIntent =
-                                                    context.packageManager.getLaunchIntentForPackage(
-                                                        it.packageName
-                                                    )
-                                                if (launchIntent != null) {
-                                                    context.startActivity(launchIntent)
-                                                }
+                                            onLongClick = {
+                                                menuNotification = it
                                             }
                                         )
                                     }
@@ -308,6 +293,87 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                                 }
                             }
                         }
+                )
+            }
+        }
+    }
+
+    if (menuNotification != null) {
+        ModalBottomSheet(
+            onDismissRequest = { menuNotification = null },
+            sheetState = sheetState
+        ) {
+            val notification = menuNotification!!
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            ) {
+                Text(
+                    text = notification.title ?: stringResource(R.string.no_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.view_later)) },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = null
+                        )
+                    },
+                    modifier = Modifier.combinedClickable(onClick = {
+                        notification.notificationKey?.let { key ->
+                            NotifyEnhService.snoozeNotification(key, 3600000)
+                        }
+                        menuNotification = null
+                    })
+                )
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.open_apk)) },
+                    leadingContent = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = null
+                        )
+                    },
+                    modifier = Modifier.combinedClickable(onClick = {
+                        val launchIntent =
+                            context.packageManager.getLaunchIntentForPackage(notification.packageName)
+                        if (launchIntent != null) context.startActivity(launchIntent)
+                        menuNotification = null
+                    })
+                )
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.create_task)) },
+                    leadingContent = { Icon(Icons.Default.Add, contentDescription = null) },
+                    modifier = Modifier.combinedClickable(onClick = {
+                        notificationToTask = notification
+                        menuNotification = null
+                    })
+                )
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.delete_record),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    modifier = Modifier.combinedClickable(onClick = {
+                        scope.launch { database.notificationDao().delete(notification) }
+                        menuNotification = null
+                    })
                 )
             }
         }
@@ -379,7 +445,7 @@ fun DateHeader(date: String) {
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 4.dp)
             )
-            androidx.compose.material3.HorizontalDivider(
+            HorizontalDivider(
                 modifier = Modifier.padding(top = 4.dp),
                 thickness = 1.dp,
                 color = MaterialTheme.colorScheme.primaryContainer
@@ -392,110 +458,54 @@ fun DateHeader(date: String) {
 @Composable
 fun NotificationItem(
     notification: NotificationEntity,
-    onDelete: () -> Unit,
-    onSnooze: (NotificationEntity) -> Unit,
-    onCreateTask: (NotificationEntity) -> Unit,
-    onOpenApp: (NotificationEntity) -> Unit
+    onLongClick: (NotificationEntity) -> Unit
 ) {
     val timeFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
     val timeString = timeFormat.format(Date(notification.postTime))
-    var showMenu by remember { mutableStateOf(false) }
 
-    Box {
-        Card(
-            modifier = Modifier
-                .fillMaxSize()
-                .combinedClickable(
-                    onClick = {
-                        //onOpenApp(notification)
-                    },
-                    onLongClick = { showMenu = true }
-                ),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = notification.packageName,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (notification.triggeredTaskId != null) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = stringResource(R.string.task_triggered),
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .size(14.dp),
-                            tint = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
-                    Text(
-                        text = timeString,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.secondary
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = { /* Could expand or do nothing */ },
+                onLongClick = { onLongClick(notification) }
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = notification.packageName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f)
+                )
+                if (notification.triggeredTaskId != null) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = stringResource(R.string.task_triggered),
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(14.dp),
+                        tint = MaterialTheme.colorScheme.tertiary
                     )
                 }
                 Text(
-                    text = notification.title ?: stringResource(R.string.no_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-                Text(
-                    text = notification.content ?: stringResource(R.string.no_content),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = timeString,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
-        }
-
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { showMenu = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.view_later)) },
-                onClick = {
-                    showMenu = false
-                    onSnooze(notification)
-                },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Notifications,
-                        contentDescription = null
-                    )
-                }
+            Text(
+                text = notification.title ?: stringResource(R.string.no_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(vertical = 4.dp)
             )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.open_apk)) },
-                onClick = {
-                    showMenu = false
-                    onOpenApp(notification)
-                },
-                leadingIcon = {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = null
-                    )
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.create_task)) },
-                onClick = {
-                    showMenu = false
-                    onCreateTask(notification)
-                },
-                leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.delete_record)) },
-                onClick = {
-                    showMenu = false
-                    onDelete()
-                },
-                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
+            Text(
+                text = notification.content ?: stringResource(R.string.no_content),
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
