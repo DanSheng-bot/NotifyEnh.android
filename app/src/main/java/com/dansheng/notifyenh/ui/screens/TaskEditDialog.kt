@@ -52,6 +52,7 @@ import androidx.core.net.toUri
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.util.AlarmUtils
+import com.dansheng.notifyenh.util.TTS
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -222,6 +223,7 @@ fun TaskEditDialog(
                             Text(stringResource(R.string.action_tts))
                         }
                     }
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -249,6 +251,30 @@ fun TaskEditDialog(
                             }
                         )
                         Text(stringResource(R.string.action_alarm))
+                    }
+
+                    if (actionTts) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 32.dp, top = 4.dp)
+                                .clickable {
+                                    TTS.speak(context.getString(R.string.test_tts_message))
+                                }
+                        ) {
+                            Text(
+                                stringResource(R.string.test_tts),
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = stringResource(R.string.test_tts),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
 
                     if (actionAlarm) {

@@ -53,6 +53,8 @@
     <string name="new_task">新任务</string>
     <string name="reset_default">恢复默认</string>
     <string name="test_alarm">测试响铃</string>
+    <string name="test_tts">测试朗读</string>
+    <string name="test_tts_message">这是一条测试朗读的消息，请确保音量已开启。</string>
     <string name="post_notif_permission">通知显示权限</string>
     <string name="post_notif_permission_desc">用于显示响铃通知及服务状态</string>
     <string name="permission_granted">已授权</string>

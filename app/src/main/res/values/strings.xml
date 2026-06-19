@@ -53,6 +53,8 @@
     <string name="new_task">New Task</string>
     <string name="reset_default">Restore Default</string>
     <string name="test_alarm">Test Alarm</string>
+    <string name="test_tts">Test Speak</string>
+    <string name="test_tts_message">This is a test message for TTS, please make sure the volume is turned on.</string>
     <string name="post_notif_permission">Post Notifications Permission</string>
     <string name="post_notif_permission_desc">Required to show alarm and service status notifications</string>
     <string name="permission_granted">Granted</string>
