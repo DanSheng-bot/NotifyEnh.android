@@ -56,6 +56,11 @@ object TTS : TextToSpeech.OnInitListener, UtteranceProgressListener() {
         val text = speakList.removeAt(0)
         val utteranceId = "tts_${System.currentTimeMillis()}"
 
+        // 合成前删除旧文件，确保如果合成失败，不会播放出旧音频
+        if (audioFile.exists()) {
+            audioFile.delete()
+        }
+
         // 使用 synthesizeToFile 生成音频文件
         val params = Bundle()
         tts?.synthesizeToFile(text, params, audioFile, utteranceId)
