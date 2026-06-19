@@ -21,6 +21,7 @@
     <string name="open_apk">打开应用</string>
     <string name="create_task">创建任务</string>
     <string name="delete_record">删除记录</string>
+    <string name="view_later">稍后查看</string>
     <string name="no_title">无标题</string>
     <string name="no_content">无内容</string>
 

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -66,6 +67,7 @@ import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.NotificationEntity
 import com.dansheng.notifyenh.data.TaskEntity
+import com.dansheng.notifyenh.service.NotifyEnhService
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -234,6 +236,14 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                                                         .delete(actualItem.notification)
                                                 }
                                             },
+                                            onSnooze = {
+                                                it.notificationKey?.let { key ->
+                                                    NotifyEnhService.snoozeNotification(
+                                                        key,
+                                                        3600000
+                                                    ) // 1 hour
+                                                }
+                                            },
                                             onCreateTask = {
                                                 notificationToTask = it
                                             },
@@ -383,6 +393,7 @@ fun DateHeader(date: String) {
 fun NotificationItem(
     notification: NotificationEntity,
     onDelete: () -> Unit,
+    onSnooze: (NotificationEntity) -> Unit,
     onCreateTask: (NotificationEntity) -> Unit,
     onOpenApp: (NotificationEntity) -> Unit
 ) {
@@ -444,6 +455,19 @@ fun NotificationItem(
             expanded = showMenu,
             onDismissRequest = { showMenu = false }
         ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.view_later)) },
+                onClick = {
+                    showMenu = false
+                    onSnooze(notification)
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Notifications,
+                        contentDescription = null
+                    )
+                }
+            )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.open_apk)) },
                 onClick = {

@@ -82,6 +82,15 @@ class NotifyEnhService : NotificationListenerService() {
             requestRebind(componentName)
             LogUtils.d("Attempted to hard reconnect NotificationListenerService")
         }
+
+        fun snoozeNotification(key: String, durationMs: Long) {
+            try {
+                instance?.snoozeNotification(key, durationMs)
+                LogUtils.d("Snoozed notification: $key for $durationMs ms")
+            } catch (e: Exception) {
+                LogUtils.e("Failed to snooze notification: $key", e)
+            }
+        }
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
