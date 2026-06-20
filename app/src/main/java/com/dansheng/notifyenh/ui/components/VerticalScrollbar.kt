@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 private val ScrollbarWidth = 6.dp
-private val ScrollbarMinThumbHeightPx = 32f
+private const val ScrollbarMinThumbHeightPx = 32f
 private val ScrollbarShape = RoundedCornerShape(3.dp)
 
 /**
