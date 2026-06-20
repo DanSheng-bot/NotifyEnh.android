@@ -2,17 +2,15 @@ package com.dansheng.notifyenh.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,14 +52,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -74,6 +68,7 @@ import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.NotificationEntity
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.service.NotifyEnhService
+import com.dansheng.notifyenh.ui.components.VerticalScrollbar
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -225,10 +220,9 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
             Box(modifier = Modifier.weight(1f)) {
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .scrollbar(listState),
+                        .fillMaxSize(),
                     state = listState,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
                         bottom = 16.dp
@@ -243,6 +237,7 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                                     DateHeader(item.date)
                                 }
                             }
+
                             is NotificationUiModel.Item -> {
                                 item(key = item.notification.id) {
                                     // Trigger loading the actual item
@@ -283,29 +278,9 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                 }
 
                 // 可拖动的滚动条区域
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .fillMaxHeight()
-                        .width(32.dp)
-                        .pointerInput(listState) {
-                            detectVerticalDragGestures { change, _ ->
-                                val totalItemsCount = listState.layoutInfo.totalItemsCount
-                                if (totalItemsCount > 0) {
-                                    val currentY = change.position.y
-                                    val targetIndex =
-                                        ((currentY / size.height) * totalItemsCount).toInt()
-                                    scope.launch {
-                                        listState.scrollToItem(
-                                            targetIndex.coerceIn(
-                                                0,
-                                                totalItemsCount - 1
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                VerticalScrollbar(
+                    state = listState,
+                    modifier = Modifier.align(Alignment.CenterEnd)
                 )
             }
         }
@@ -574,46 +549,4 @@ fun NotificationItem(
 sealed class NotificationUiModel {
     data class Item(val notification: NotificationEntity) : NotificationUiModel()
     data class Separator(val date: String) : NotificationUiModel()
-}
-
-fun Modifier.scrollbar(
-    state: LazyListState,
-    thickness: Dp = 6.dp,
-    color: Color = Color.Gray.copy(alpha = 0.7f),
-    cornerRadius: Dp = 3.dp,
-    minHeight: Dp = 32.dp
-): Modifier = drawWithContent {
-    drawContent()
-
-    val layoutInfo = state.layoutInfo
-    val visibleItemsInfo = layoutInfo.visibleItemsInfo
-
-    if (visibleItemsInfo.isNotEmpty()) {
-        val totalItemsCount = layoutInfo.totalItemsCount
-        val visibleItemsCount = visibleItemsInfo.size
-
-        if (totalItemsCount > visibleItemsCount) {
-            val firstVisibleItemIndex = visibleItemsInfo.first().index
-
-            // 计算理论高度和实际高度（不小于最小高度）
-            val theoreticalHeight = size.height * (visibleItemsCount.toFloat() / totalItemsCount)
-            val actualHeight = theoreticalHeight.coerceAtLeast(minHeight.toPx())
-
-            // 计算滚动进度 (0.0 到 1.0)
-            val scrollProgress =
-                firstVisibleItemIndex.toFloat() / (totalItemsCount - visibleItemsCount).coerceAtLeast(
-                    1
-                ).toFloat()
-
-            // 计算偏移量，确保滚动条不会超出底部
-            val scrollbarOffset = (size.height - actualHeight) * scrollProgress
-
-            drawRoundRect(
-                color = color,
-                topLeft = Offset(size.width - thickness.toPx(), scrollbarOffset),
-                size = Size(thickness.toPx(), actualHeight),
-                cornerRadius = CornerRadius(cornerRadius.toPx())
-            )
-        }
-    }
 }
