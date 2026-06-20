@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,9 +43,11 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -147,74 +150,90 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
 
     val sheetState = rememberModalBottomSheetState()
 
-    Column(modifier = modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier.weight(1f),
-                placeholder = {
-                    Text(
-                        stringResource(R.string.search_placeholder),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        placeholder = {
+                            Text(
+                                stringResource(R.string.search_placeholder),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(
+                                        Icons.Default.Clear,
+                                        contentDescription = stringResource(R.string.clear)
+                                    )
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
                     )
                 },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                actions = {
+                    Box {
+                        IconButton(onClick = { showMoreMenu = true }) {
                             Icon(
-                                Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.clear)
+                                Icons.Default.MoreVert,
+                                contentDescription = stringResource(R.string.more_options)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMoreMenu,
+                            onDismissRequest = { showMoreMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.clear_all_notifications)) },
+                                onClick = {
+                                    showMoreMenu = false
+                                    NotifyEnhService.clearAllNotifications()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Clear,
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.delete_all_records)) },
+                                onClick = {
+                                    showMoreMenu = false
+                                    showClearConfirm = true
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = null
+                                    )
+                                }
                             )
                         }
                     }
                 },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
-
-            /**
-             * 菜单
-             */
-            Box {
-                IconButton(onClick = { showMoreMenu = true }) {
-                    Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = stringResource(R.string.more_options)
-                    )
-                }
-                DropdownMenu(
-                    expanded = showMoreMenu,
-                    onDismissRequest = { showMoreMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.clear_all_notifications)) },
-                        onClick = {
-                            showMoreMenu = false
-                            NotifyEnhService.clearAllNotifications()
-                        },
-                        leadingIcon = { Icon(Icons.Default.Clear, contentDescription = null) }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.delete_all_records)) },
-                        onClick = {
-                            showMoreMenu = false
-                            showClearConfirm = true
-                        },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
-                    )
-                }
-            }
         }
-
-        if (notifications.itemCount == 0) {
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (notifications.itemCount == 0) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -320,6 +339,7 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
     }
 
     if (menuNotification != null) {
