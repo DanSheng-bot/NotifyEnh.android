@@ -276,7 +276,7 @@ fun TaskItem(
                         Icons.Default.KeyboardArrowUp,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = if (!isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                        tint = if (!isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                     )
                 }
                 IconButton(
@@ -288,7 +288,7 @@ fun TaskItem(
                         Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = if (!isLast) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+                        tint = if (!isLast) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                     )
                 }
             }
