@@ -119,7 +119,7 @@ object AlarmUtils {
                 isLooping = true
                 prepare()
                 start()
-                LogUtils.d("MediaPlayer started with URI: $alarmUri")
+                //LogUtils.d("MediaPlayer started with URI: $alarmUri")
             }
 
             // Vibrate
