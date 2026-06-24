@@ -114,7 +114,7 @@ class NotifyEnhService : NotificationListenerService() {
             return try {
                 // 尝试获取活跃通知列表，如果 Binder 连接已死，这里通常会抛出异常或返回空
                 instance?.activeNotifications != null
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
