@@ -109,7 +109,7 @@ object TTS : TextToSpeech.OnInitListener, UtteranceProgressListener() {
                 try {
                     loudnessEnhancer?.release()
                     loudnessEnhancer = LoudnessEnhancer(audioSessionId).apply {
-                        setTargetGain(352)
+                        setTargetGain(360)
                         enabled = true
                     }
                 } catch (e: Exception) {

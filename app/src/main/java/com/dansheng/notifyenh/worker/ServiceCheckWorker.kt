@@ -1,7 +1,6 @@
 package com.dansheng.notifyenh.worker
 
 import android.content.Context
-import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
@@ -39,11 +38,9 @@ class ServiceCheckWorker(
         private const val WORK_NAME = "ServiceCheckWorker"
 
         fun schedule(context: Context) {
+            val repeatInterval = 15L
             val workRequest = PeriodicWorkRequestBuilder<ServiceCheckWorker>(
-                15, TimeUnit.MINUTES
-            ).setConstraints(
-                Constraints.Builder()
-                    .build()
+                repeatInterval, TimeUnit.MINUTES
             ).build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -51,7 +48,7 @@ class ServiceCheckWorker(
                 ExistingPeriodicWorkPolicy.KEEP,
                 workRequest
             )
-            LogUtils.d("ServiceCheckWorker scheduled every 10 minutes")
+            LogUtils.d("ServiceCheckWorker scheduled every $repeatInterval minutes")
         }
 
         @Suppress("unused")

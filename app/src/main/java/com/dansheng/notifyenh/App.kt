@@ -3,7 +3,6 @@ package com.dansheng.notifyenh
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
 import com.dansheng.notifyenh.util.CrashHandler
 import com.dansheng.notifyenh.worker.ServiceCheckWorker
 
@@ -29,7 +28,7 @@ class App : Application() {
     }
 
     private fun createNotificationChannel() {
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         val channel = NotificationChannel(
             CHANNEL_ID,
