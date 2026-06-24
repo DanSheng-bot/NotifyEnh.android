@@ -1,16 +1,10 @@
 package com.dansheng.notifyenh.ui.screens
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.NotificationManager
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.text.TextUtils
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -59,6 +52,7 @@ import com.dansheng.notifyenh.ui.components.ChangelogDialog
 import com.dansheng.notifyenh.ui.components.LogDialog
 import com.dansheng.notifyenh.util.AlarmUtils
 import com.dansheng.notifyenh.util.BackupUtils
+import com.dansheng.notifyenh.util.PermissionUtils
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -75,27 +69,46 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val themeMode by appPreferences.themeModeFlow.collectAsState(initial = ThemeMode.SYSTEM)
     val persistentMode by appPreferences.persistentModeFlow.collectAsState(initial = false)
     val retentionDays by appPreferences.retentionDaysFlow.collectAsState(initial = 7)
-    var isPermissionGranted by remember { mutableStateOf(isNotificationServiceEnabled(context)) }
-    var isPostNotifGranted by remember { mutableStateOf(isPostNotificationsPermissionGranted(context)) }
+    var isPermissionGranted by remember {
+        mutableStateOf(
+            PermissionUtils.isNotificationServiceEnabled(
+                context
+            )
+        )
+    }
+    var isPostNotifGranted by remember {
+        mutableStateOf(
+            PermissionUtils.isPostNotificationsPermissionGranted(
+                context
+            )
+        )
+    }
     var isFullScreenIntentGranted by remember {
         mutableStateOf(
-            isFullScreenIntentPermissionGranted(
+            PermissionUtils.isFullScreenIntentPermissionGranted(
                 context
             )
         )
     }
     val isServiceRunning by NotifyEnhService.isServiceRunning.collectAsState()
-    var isIgnoringBattery by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
+    var isIgnoringBattery by remember {
+        mutableStateOf(
+            PermissionUtils.isIgnoringBatteryOptimizations(
+                context
+            )
+        )
+    }
     val isAlarmRinging by AlarmUtils.isAlarmRinging.collectAsState()
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                isPermissionGranted = isNotificationServiceEnabled(context)
-                isPostNotifGranted = isPostNotificationsPermissionGranted(context)
-                isFullScreenIntentGranted = isFullScreenIntentPermissionGranted(context)
-                isIgnoringBattery = isIgnoringBatteryOptimizations(context)
+                isPermissionGranted = PermissionUtils.isNotificationServiceEnabled(context)
+                isPostNotifGranted = PermissionUtils.isPostNotificationsPermissionGranted(context)
+                isFullScreenIntentGranted =
+                    PermissionUtils.isFullScreenIntentPermissionGranted(context)
+                isIgnoringBattery = PermissionUtils.isIgnoringBatteryOptimizations(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -648,48 +661,6 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             }
         }
     }
-}
-
-fun isFullScreenIntentPermissionGranted(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.canUseFullScreenIntent()
-    } else {
-        true
-    }
-}
-
-fun isPostNotificationsPermissionGranted(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
-    } else {
-        true
-    }
-}
-
-fun isNotificationServiceEnabled(context: Context): Boolean {
-    val pkgName = context.packageName
-    val flat = Settings.Secure.getString(context.contentResolver, "enabled_notification_listeners")
-    if (!flat.isNullOrEmpty()) {
-        val names = flat.split(":")
-        for (name in names) {
-            val cn = ComponentName.unflattenFromString(name)
-            if (cn != null) {
-                if (TextUtils.equals(pkgName, cn.packageName)) {
-                    return true
-                }
-            }
-        }
-    }
-    return false
-}
-
-fun isIgnoringBatteryOptimizations(context: Context): Boolean {
-    val powerManager = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
-    return powerManager.isIgnoringBatteryOptimizations(context.packageName)
 }
 
 @Composable

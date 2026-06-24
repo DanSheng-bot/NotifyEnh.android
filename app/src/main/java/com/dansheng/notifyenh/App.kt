@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import com.dansheng.notifyenh.util.CrashHandler
+import com.dansheng.notifyenh.worker.ServiceCheckWorker
 
 class App : Application() {
 
@@ -24,6 +25,7 @@ class App : Application() {
         instance = this
         CrashHandler(this)
         createNotificationChannel()
+        ServiceCheckWorker.schedule(this)
     }
 
     private fun createNotificationChannel() {

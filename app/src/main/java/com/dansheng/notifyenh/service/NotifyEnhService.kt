@@ -83,6 +83,9 @@ class NotifyEnhService : NotificationListenerService() {
             LogUtils.d("Attempted to hard reconnect NotificationListenerService")
         }
 
+        /**
+         * 清除所有通知
+         */
         fun clearAllNotifications() {
             try {
                 instance?.cancelAllNotifications()
@@ -92,12 +95,27 @@ class NotifyEnhService : NotificationListenerService() {
             }
         }
 
+        /**
+         * 稍后查看
+         */
         fun snoozeNotification(key: String, durationMs: Long) {
             try {
                 instance?.snoozeNotification(key, durationMs)
                 LogUtils.d("Snoozed notification: $key for $durationMs ms")
             } catch (e: Exception) {
                 LogUtils.e("Failed to snooze notification: $key", e)
+            }
+        }
+
+        /**
+         * 连接是否真的还活着
+         */
+        fun isConnectionHealthy(): Boolean {
+            return try {
+                // 尝试获取活跃通知列表，如果 Binder 连接已死，这里通常会抛出异常或返回空
+                instance?.activeNotifications != null
+            } catch (e: Exception) {
+                false
             }
         }
     }
