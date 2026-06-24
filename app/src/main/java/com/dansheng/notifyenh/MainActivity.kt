@@ -31,8 +31,8 @@ import com.dansheng.notifyenh.ui.components.ChangelogDialog
 import com.dansheng.notifyenh.ui.screens.NotificationListScreen
 import com.dansheng.notifyenh.ui.screens.SettingsScreen
 import com.dansheng.notifyenh.ui.screens.TaskerScreen
-import com.dansheng.notifyenh.ui.screens.isNotificationServiceEnabled
 import com.dansheng.notifyenh.ui.theme.NotifyEnhTheme
+import com.dansheng.notifyenh.util.PermissionUtils.isNotificationServiceEnabled
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 

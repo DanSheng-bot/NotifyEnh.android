@@ -55,6 +55,8 @@ import androidx.core.net.toUri
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.util.AlarmUtils
+import com.dansheng.notifyenh.util.PermissionUtils.isFullScreenIntentPermissionGranted
+import com.dansheng.notifyenh.util.PermissionUtils.isPostNotificationsPermissionGranted
 import com.dansheng.notifyenh.util.TTS
 
 @SuppressLint("LocalContextGetResourceValueCall")
