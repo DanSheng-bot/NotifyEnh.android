@@ -23,7 +23,7 @@ class ServiceCheckWorker(
         val appPreferences = AppPreferences(applicationContext)
         val isManuallyStopped = appPreferences.isManuallyStoppedFlow.first()
         val isEnabled = PermissionUtils.isNotificationServiceEnabled(applicationContext)
-        val isRunning = NotifyEnhService.isServiceRunning.value
+        val isRunning = NotifyEnhService.isConnectionHealthy()
 
         LogUtils.d("ServiceCheckWorker: isEnabled=$isEnabled, isRunning=$isRunning, isManuallyStopped=$isManuallyStopped")
 
@@ -54,6 +54,7 @@ class ServiceCheckWorker(
             LogUtils.d("ServiceCheckWorker scheduled every 10 minutes")
         }
 
+        @Suppress("unused")
         fun cancel(context: Context) {
             WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
             LogUtils.d("ServiceCheckWorker cancelled")
