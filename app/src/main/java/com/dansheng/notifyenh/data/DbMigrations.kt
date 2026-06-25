@@ -75,6 +75,23 @@ object DbMigrations {
         }
     }
 
+    private val MIGRATION_11_12 = object : Migration(11, 12) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Recreate task_control_cross_ref with foreign keys
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `task_control_cross_ref_new` (" +
+                        "`taskId` INTEGER NOT NULL, " +
+                        "`controlId` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`taskId`, `controlId`), " +
+                        "FOREIGN KEY(`taskId`) REFERENCES `tasks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                        "FOREIGN KEY(`controlId`) REFERENCES `controls`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"
+            )
+            db.execSQL("INSERT INTO task_control_cross_ref_new (taskId, controlId) SELECT taskId, controlId FROM task_control_cross_ref")
+            db.execSQL("DROP TABLE task_control_cross_ref")
+            db.execSQL("ALTER TABLE task_control_cross_ref_new RENAME TO task_control_cross_ref")
+        }
+    }
+
     val MIGRATIONS = arrayOf(
         MIGRATION_4_5,
         MIGRATION_5_6,
@@ -82,7 +99,8 @@ object DbMigrations {
         MIGRATION_7_8,
         MIGRATION_8_9,
         MIGRATION_9_10,
-        MIGRATION_10_11
+        MIGRATION_10_11,
+        MIGRATION_11_12
     )
 
 }

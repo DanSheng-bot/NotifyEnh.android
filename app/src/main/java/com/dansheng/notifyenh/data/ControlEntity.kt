@@ -1,6 +1,7 @@
 package com.dansheng.notifyenh.data
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 
@@ -31,7 +32,21 @@ data class ControlEntity(
 
 @Entity(
     tableName = "task_control_cross_ref",
-    primaryKeys = ["taskId", "controlId"]
+    primaryKeys = ["taskId", "controlId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = TaskEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["taskId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = ControlEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["controlId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
 )
 data class TaskControlCrossRef(
     val taskId: Long,
