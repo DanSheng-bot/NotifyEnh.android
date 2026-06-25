@@ -35,12 +35,20 @@ object DbMigrations {
         }
     }
 
+    private val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `controls` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `isEnabled` INTEGER NOT NULL, `checkDnd` INTEGER NOT NULL, `dndBehavior` INTEGER NOT NULL, `checkTime` INTEGER NOT NULL, `startTime` TEXT, `endTime` TEXT, `sortOrder` INTEGER NOT NULL)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS `task_control_cross_ref` (`taskId` INTEGER NOT NULL, `controlId` INTEGER NOT NULL, PRIMARY KEY(`taskId`, `controlId`))")
+        }
+    }
+
     val MIGRATIONS = arrayOf(
         MIGRATION_4_5,
         MIGRATION_5_6,
         MIGRATION_6_7,
         MIGRATION_7_8,
-        MIGRATION_8_9
+        MIGRATION_8_9,
+        MIGRATION_9_10
     )
 
 }

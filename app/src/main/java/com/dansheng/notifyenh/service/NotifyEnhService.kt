@@ -271,20 +271,24 @@ class NotifyEnhService : NotificationListenerService() {
             triggeredTask?.let {
                 handleRemainingActions(it, title, content)
             }
-
         }
     }
 
-    private fun handleRemainingActions(
+    private suspend fun handleRemainingActions(
         task: TaskEntity,
         title: String,
         content: String
     ) {
-        // 检查免打扰模式 (DND)，如果开启则不执行 TTS 和 响铃
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        if (notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL) {
-            LogUtils.d("免打扰开启中, 跳过 TTS/Alarm for: $title")
-            return
+        // 检查是否有控制显式允许在勿扰模式下执行
+        val controls = database.controlDao().getControlsForTaskList(task.id)
+        val isExplicitlyAllowedInDnd = controls.any { it.checkDnd && it.dndBehavior == 1 }
+
+        if (!isExplicitlyAllowedInDnd) {
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            if (notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL) {
+                LogUtils.d("免打扰开启中且未通过控制显式允许, 跳过 TTS/Alarm for: $title")
+                return
+            }
         }
 
         if (task.actionTts) {
@@ -317,10 +321,67 @@ class NotifyEnhService : NotificationListenerService() {
         val enabledTasks = database.taskDao().getEnabledTasksForPackage(sbn.packageName)
         for (task in enabledTasks) {
             if (isMatch(task, title, content)) {
-                return task
+                if (checkControls(task)) {
+                    return task
+                }
             }
         }
         return null
+    }
+
+    private suspend fun checkControls(task: TaskEntity): Boolean {
+        val controls = database.controlDao().getControlsForTaskList(task.id)
+
+        // If no controls bound, fallback to default DND check for TTS/Alarm
+        if (controls.isEmpty()) {
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            if (notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL) {
+                // If it's a DND and task has TTS or Alarm, we should probably still allow Cancel action?
+                // The original code skipped TTS/Alarm in handleRemainingActions but findTriggeredTask still returned the task.
+                // So actionCancel still happened.
+                return true
+            }
+            return true
+        }
+
+        for (control in controls) {
+            if (!control.isEnabled) return false
+
+            if (control.checkDnd) {
+                val notificationManager =
+                    getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                val isDnd =
+                    notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
+                if (isDnd && control.dndBehavior == 0) return false
+            }
+
+            if (control.checkTime) {
+                if (!isNowInTimeRange(control.startTime, control.endTime)) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    private fun isNowInTimeRange(startTime: String?, endTime: String?): Boolean {
+        if (startTime.isNullOrBlank() || endTime.isNullOrBlank()) return true
+        try {
+            val now = java.util.Calendar.getInstance()
+            val currentHour = now.get(java.util.Calendar.HOUR_OF_DAY)
+            val currentMinute = now.get(java.util.Calendar.MINUTE)
+            val nowTime =
+                String.format(java.util.Locale.US, "%02d:%02d", currentHour, currentMinute)
+
+            if (startTime <= endTime) {
+                return nowTime in startTime..endTime
+            } else {
+                // Crosses midnight
+                return nowTime >= startTime || nowTime <= endTime
+            }
+        } catch (_: Exception) {
+            return true
+        }
     }
 
     private suspend fun cleanupOldData() {

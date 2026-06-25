@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import com.dansheng.notifyenh.R
+import com.dansheng.notifyenh.data.AppDatabase
+import com.dansheng.notifyenh.data.ControlEntity
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.util.AlarmUtils
 import com.dansheng.notifyenh.util.PermissionUtils.isFullScreenIntentPermissionGranted
@@ -64,7 +66,7 @@ import com.dansheng.notifyenh.util.TTS
 fun TaskEditDialog(
     task: TaskEntity?,
     onDismiss: () -> Unit,
-    onConfirm: (TaskEntity) -> Unit
+    onConfirm: (TaskEntity, List<Long>) -> Unit
 ) {
     var name by remember { mutableStateOf(task?.name ?: "") }
     var packageName by remember { mutableStateOf(task?.packageName ?: "") }
@@ -76,10 +78,21 @@ fun TaskEditDialog(
     var actionAlarm by remember { mutableStateOf(task?.actionAlarm ?: false) }
     var alarmRingtone by remember { mutableStateOf(task?.alarmRingtone) }
 
+    val context = LocalContext.current
+    val database = remember { AppDatabase.getDatabase(context) }
+    var allControls by remember { mutableStateOf<List<ControlEntity>>(emptyList()) }
+    var selectedControlIds by remember { mutableStateOf<List<Long>>(emptyList()) }
+
+    androidx.compose.runtime.LaunchedEffect(task) {
+        allControls = database.controlDao().getAllControlsList()
+        task?.let {
+            selectedControlIds = database.controlDao().getControlsForTaskList(it.id).map { it.id }
+        }
+    }
+
     var showAppPicker by remember { mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
-    val context = LocalContext.current
 
     val ringtonePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -386,6 +399,41 @@ fun TaskEditDialog(
                         }
                     }
                 }
+
+                if (allControls.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.bind_controls),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    allControls.forEach { control ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedControlIds =
+                                        if (selectedControlIds.contains(control.id)) {
+                                            selectedControlIds - control.id
+                                        } else {
+                                            selectedControlIds + control.id
+                                        }
+                                }
+                        ) {
+                            Checkbox(
+                                checked = selectedControlIds.contains(control.id),
+                                onCheckedChange = { checked ->
+                                    selectedControlIds = if (checked) {
+                                        selectedControlIds + control.id
+                                    } else {
+                                        selectedControlIds - control.id
+                                    }
+                                }
+                            )
+                            Text(control.name)
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -404,7 +452,8 @@ fun TaskEditDialog(
                             actionAlarm = actionAlarm,
                             alarmRingtone = alarmRingtone,
                             isEnabled = task?.isEnabled ?: true
-                        )
+                        ),
+                        selectedControlIds
                     )
                 },
                 enabled = name.isNotBlank() && (titlePattern.isNotBlank() || contentPattern.isNotBlank() || actionCancel || actionTts || actionAlarm)
@@ -510,7 +559,7 @@ fun TaskEditDialogPreview() {
                 actionAlarm = true
             ),
             onDismiss = {},
-            onConfirm = {}
+            onConfirm = { _, _ -> }
         )
     }
 }

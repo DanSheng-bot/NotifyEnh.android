@@ -4,6 +4,7 @@
     <!-- Home / Nav -->
     <string name="nav_home">Home</string>
     <string name="nav_tasks">Tasks</string>
+    <string name="nav_controls">Controls</string>
     <string name="nav_settings">Settings</string>
 
     <!-- Notification List -->
@@ -74,6 +75,23 @@
     <string name="full_screen_intent_permission">Full Screen Intent Permission</string>
     <string name="full_screen_intent_permission_desc">Required to show alarm screen automatically</string>
     <string name="alarm_title">Notification reminder</string>
+
+    <!-- Control Screen -->
+    <string name="control_management">Control Management</string>
+    <string name="add_control">Add Control</string>
+    <string name="no_controls">No controls</string>
+    <string name="edit_control">Edit Control</string>
+    <string name="control_name">Control Name</string>
+    <string name="check_dnd">DND Mode Control</string>
+    <string name="dnd_behavior">DND Behavior</string>
+    <string name="dnd_execute">Allow Execute</string>
+    <string name="dnd_not_execute">Forbidden Execute</string>
+    <string name="manual_control">Manual Control</string>
+    <string name="manual_enabled">Manual Enable Task</string>
+    <string name="time_control">Time Control</string>
+    <string name="start_time">Start Time</string>
+    <string name="end_time">End Time</string>
+    <string name="bind_controls">Bind Controls</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>

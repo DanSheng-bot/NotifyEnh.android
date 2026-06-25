@@ -4,6 +4,7 @@
     <!-- Home / Nav -->
     <string name="nav_home">首页</string>
     <string name="nav_tasks">任务</string>
+    <string name="nav_controls">控制</string>
     <string name="nav_settings">配置</string>
 
     <!-- Notification List -->
@@ -74,6 +75,23 @@
     <string name="full_screen_intent_permission">全屏界面显示权限</string>
     <string name="full_screen_intent_permission_desc">用于在响铃时自动弹出全屏控制界面</string>
     <string name="alarm_title">通知提醒</string>
+
+    <!-- Control Screen -->
+    <string name="control_management">控制管理</string>
+    <string name="add_control">添加控制</string>
+    <string name="no_controls">暂无控制</string>
+    <string name="edit_control">编辑控制</string>
+    <string name="control_name">控制名称</string>
+    <string name="check_dnd">勿扰模式控制</string>
+    <string name="dnd_behavior">勿扰模式下行为</string>
+    <string name="dnd_execute">允许执行</string>
+    <string name="dnd_not_execute">禁止执行</string>
+    <string name="manual_control">手动控制</string>
+    <string name="manual_enabled">手动启用任务</string>
+    <string name="time_control">按时间控制</string>
+    <string name="start_time">开始时间</string>
+    <string name="end_time">结束时间</string>
+    <string name="bind_controls">绑定控制</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">设置</string>

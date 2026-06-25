@@ -75,6 +75,7 @@ import androidx.paging.map
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.NotificationEntity
+import com.dansheng.notifyenh.data.TaskControlCrossRef
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.service.NotifyEnhService
 import com.dansheng.notifyenh.ui.components.VerticalScrollbar
@@ -484,9 +485,14 @@ fun NotificationListScreen(modifier: Modifier = Modifier) {
         TaskEditDialog(
             task = initialTask,
             onDismiss = { notificationToTask = null },
-            onConfirm = { newTask ->
+            onConfirm = { newTask, selectedControlIds ->
                 scope.launch {
-                    database.taskDao().insert(newTask)
+                    val maxOrder = database.taskDao().getMaxSortOrder(newTask.packageName) ?: 0
+                    val taskId = database.taskDao().insert(newTask.copy(sortOrder = maxOrder + 1))
+
+                    selectedControlIds.forEach { controlId ->
+                        database.controlDao().insertCrossRef(TaskControlCrossRef(taskId, controlId))
+                    }
                     notificationToTask = null
                 }
             }

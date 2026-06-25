@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
+import com.dansheng.notifyenh.data.TaskControlCrossRef
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.util.BackupUtils
 import kotlinx.coroutines.launch
@@ -176,6 +177,8 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                             tasksInGroup.size,
                             key = { index -> tasksInGroup[index].id }) { index ->
                             val task = tasksInGroup[index]
+                            val boundControls by database.controlDao().getControlsForTask(task.id)
+                                .collectAsState(initial = emptyList())
                             TaskItem(
                                 task = task,
                                 isFirst = index == 0,
@@ -216,7 +219,8 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                                         database.taskDao().delete(task)
                                         BackupUtils.autoBackup(context)
                                     }
-                                }
+                                },
+                                boundControls = boundControls
                             )
                         }
                     }
@@ -232,14 +236,22 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                 showAddDialog = false
                 taskToEdit = null
             },
-            onConfirm = { newTask ->
+            onConfirm = { newTask, selectedControlIds ->
                 scope.launch {
-                    if (taskToEdit != null) {
+                    val taskId = if (taskToEdit != null) {
                         database.taskDao().update(newTask.copy(sortOrder = taskToEdit!!.sortOrder))
+                        taskToEdit!!.id
                     } else {
                         val maxOrder = database.taskDao().getMaxSortOrder(newTask.packageName) ?: 0
                         database.taskDao().insert(newTask.copy(sortOrder = maxOrder + 1))
                     }
+
+                    // Update bindings
+                    database.controlDao().deleteByTaskId(taskId)
+                    selectedControlIds.forEach { controlId ->
+                        database.controlDao().insertCrossRef(TaskControlCrossRef(taskId, controlId))
+                    }
+
                     BackupUtils.autoBackup(context)
                     showAddDialog = false
                     taskToEdit = null
@@ -258,7 +270,8 @@ fun TaskItem(
     onMoveDown: () -> Unit,
     onEdit: (TaskEntity) -> Unit,
     onToggle: (Boolean) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    boundControls: List<com.dansheng.notifyenh.data.ControlEntity> = emptyList()
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -312,17 +325,21 @@ fun TaskItem(
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
-                Row(modifier = Modifier.padding(top = 2.dp)) {
+                Row(
+                    modifier = Modifier.padding(top = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     if (task.actionCancel) {
                         Text(
-                            stringResource(R.string.action_cancel_notif) + " ",
+                            stringResource(R.string.action_cancel_notif),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
                     if (task.actionTts) {
                         Text(
-                            stringResource(R.string.action_tts) + " ",
+                            stringResource(R.string.action_tts),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.secondary
                         )
@@ -332,6 +349,15 @@ fun TaskItem(
                             stringResource(R.string.action_alarm),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                    if (boundControls.isNotEmpty()) {
+                        Text(
+                            text = boundControls.joinToString { it.name },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.outline,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     }
                 }

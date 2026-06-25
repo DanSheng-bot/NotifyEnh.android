@@ -5,11 +5,15 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [NotificationEntity::class, TaskEntity::class, LogEntity::class], version = 9)
+@Database(
+    entities = [NotificationEntity::class, TaskEntity::class, LogEntity::class, ControlEntity::class, TaskControlCrossRef::class],
+    version = 10
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun taskDao(): TaskDao
     abstract fun logDao(): LogDao
+    abstract fun controlDao(): ControlDao
 
     companion object {
         @Volatile

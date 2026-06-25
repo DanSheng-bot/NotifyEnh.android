@@ -28,6 +28,7 @@ import com.dansheng.notifyenh.data.prefs.AppPreferences
 import com.dansheng.notifyenh.data.prefs.ThemeMode
 import com.dansheng.notifyenh.service.NotifyEnhService
 import com.dansheng.notifyenh.ui.components.ChangelogDialog
+import com.dansheng.notifyenh.ui.screens.ControlScreen
 import com.dansheng.notifyenh.ui.screens.NotificationListScreen
 import com.dansheng.notifyenh.ui.screens.SettingsScreen
 import com.dansheng.notifyenh.ui.screens.TaskerScreen
@@ -142,6 +143,7 @@ fun NotifyEnhApp(appPreferences: AppPreferences) {
                 when (destinations[page]) {
                     AppDestinations.HOME -> NotificationListScreen()
                     AppDestinations.Tasker -> TaskerScreen()
+                    AppDestinations.CONTROL -> ControlScreen()
                     AppDestinations.PROFILE -> SettingsScreen()
                 }
             }
@@ -155,5 +157,6 @@ enum class AppDestinations(
 ) {
     HOME(R.string.nav_home, R.drawable.ic_home),
     Tasker(R.string.nav_tasks, R.drawable.ic_tasks),
+    CONTROL(R.string.nav_controls, R.drawable.ic_controls),
     PROFILE(R.string.nav_settings, R.drawable.ic_settings),
 }
