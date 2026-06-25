@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -59,6 +60,7 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
     
     var showAddDialog by remember { mutableStateOf(false) }
     var taskToEdit by remember { mutableStateOf<TaskEntity?>(null) }
+    var taskToEditControls by remember { mutableStateOf<TaskEntity?>(null) }
     
     val groupedTasks = remember(tasks) {
         tasks.groupBy { it.packageName ?: "通用" }
@@ -220,6 +222,7 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
                                         BackupUtils.autoBackup(context)
                                     }
                                 },
+                                onEditControls = { taskToEditControls = it },
                                 boundControls = boundControls
                             )
                         }
@@ -259,6 +262,24 @@ fun TaskerScreen(modifier: Modifier = Modifier) {
             }
         )
     }
+
+    if (taskToEditControls != null) {
+        TaskControlBindingDialog(
+            task = taskToEditControls!!,
+            onDismiss = { taskToEditControls = null },
+            onConfirm = { selectedControlIds ->
+                scope.launch {
+                    val taskId = taskToEditControls!!.id
+                    database.controlDao().deleteByTaskId(taskId)
+                    selectedControlIds.forEach { controlId ->
+                        database.controlDao().insertCrossRef(TaskControlCrossRef(taskId, controlId))
+                    }
+                    BackupUtils.autoBackup(context)
+                    taskToEditControls = null
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -271,6 +292,7 @@ fun TaskItem(
     onEdit: (TaskEntity) -> Unit,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit,
+    onEditControls: (TaskEntity) -> Unit,
     boundControls: List<com.dansheng.notifyenh.data.ControlEntity> = emptyList()
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -388,6 +410,14 @@ fun TaskItem(
                             onEdit(task)
                         },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.bind_controls)) },
+                        onClick = {
+                            showMenu = false
+                            onEditControls(task)
+                        },
+                        leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) }
                     )
                     DropdownMenuItem(
                         text = {
