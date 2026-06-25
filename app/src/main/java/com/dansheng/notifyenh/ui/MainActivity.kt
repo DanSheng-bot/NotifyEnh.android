@@ -1,4 +1,4 @@
-package com.dansheng.notifyenh
+package com.dansheng.notifyenh.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
+import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.prefs.AppPreferences
 import com.dansheng.notifyenh.data.prefs.ThemeMode
 import com.dansheng.notifyenh.service.NotifyEnhService

@@ -16,7 +16,6 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.dansheng.notifyenh.App.Companion.CHANNEL_ID
 import com.dansheng.notifyenh.App.Companion.NOTIFICATION_ID
-import com.dansheng.notifyenh.MainActivity
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.ControlEntity
@@ -24,6 +23,7 @@ import com.dansheng.notifyenh.data.ControlType
 import com.dansheng.notifyenh.data.NotificationEntity
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.data.prefs.AppPreferences
+import com.dansheng.notifyenh.ui.MainActivity
 import com.dansheng.notifyenh.util.AlarmUtils
 import com.dansheng.notifyenh.util.AlarmUtils.startAlarm
 import com.dansheng.notifyenh.util.LogUtils
