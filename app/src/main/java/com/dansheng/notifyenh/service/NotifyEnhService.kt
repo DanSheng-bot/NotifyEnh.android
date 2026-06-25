@@ -20,6 +20,7 @@ import com.dansheng.notifyenh.MainActivity
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.ControlEntity
+import com.dansheng.notifyenh.data.ControlType
 import com.dansheng.notifyenh.data.NotificationEntity
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.data.prefs.AppPreferences
@@ -286,7 +287,8 @@ class NotifyEnhService : NotificationListenerService() {
         controls: List<ControlEntity>
     ) {
         // 检查是否有控制显式允许在勿扰模式下执行
-        val isExplicitlyAllowedInDnd = controls.any { it.checkDnd && it.dndBehavior == 1 }
+        val isExplicitlyAllowedInDnd =
+            controls.any { it.controlType == ControlType.DND && it.dndBehavior == 1 }
 
         if (!isExplicitlyAllowedInDnd) {
             if (notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL) {
@@ -339,7 +341,7 @@ class NotifyEnhService : NotificationListenerService() {
         if (enabledControls.isEmpty()) return true
 
         // 1. 勿扰模式控制：必须全部通过 (AND 逻辑)
-        val dndControls = enabledControls.filter { it.checkDnd }
+        val dndControls = enabledControls.filter { it.controlType == ControlType.DND }
         for (control in dndControls) {
             val isDnd =
                 notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
@@ -349,7 +351,7 @@ class NotifyEnhService : NotificationListenerService() {
         }
 
         // 2. 时间段控制：满足其中一个即可 (OR 逻辑)
-        val timeControls = enabledControls.filter { it.checkTime }
+        val timeControls = enabledControls.filter { it.controlType == ControlType.TIME }
         if (timeControls.isNotEmpty()) {
             val anyTimeMatch = timeControls.any { isNowInTimeRange(it.startTime, it.endTime) }
             if (!anyTimeMatch) {

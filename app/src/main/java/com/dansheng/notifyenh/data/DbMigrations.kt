@@ -42,13 +42,47 @@ object DbMigrations {
         }
     }
 
+    private val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. 创建新表
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `controls_new` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`name` TEXT NOT NULL, " +
+                        "`isEnabled` INTEGER NOT NULL, " +
+                        "`controlType` TEXT NOT NULL, " +
+                        "`dndBehavior` INTEGER NOT NULL, " +
+                        "`startTime` TEXT NOT NULL, " +
+                        "`endTime` TEXT NOT NULL, " +
+                        "`sortOrder` INTEGER NOT NULL)"
+            )
+
+            // 2. 迁移数据
+            // 逻辑：如果 checkDnd 为 1，则设为 DND；否则如果 checkTime 为 1，则设为 TIME；否则设为 MANUAL
+            db.execSQL(
+                "INSERT INTO controls_new (id, name, isEnabled, controlType, dndBehavior, startTime, endTime, sortOrder) " +
+                        "SELECT id, name, isEnabled, " +
+                        "CASE WHEN checkDnd = 1 THEN 'DND' WHEN checkTime = 1 THEN 'TIME' ELSE 'MANUAL' END, " +
+                        "dndBehavior, " +
+                        "IFNULL(startTime, '00:00'), " +
+                        "IFNULL(endTime, '23:59'), " +
+                        "sortOrder FROM controls"
+            )
+
+            // 3. 删除旧表并重命名新表
+            db.execSQL("DROP TABLE controls")
+            db.execSQL("ALTER TABLE controls_new RENAME TO controls")
+        }
+    }
+
     val MIGRATIONS = arrayOf(
         MIGRATION_4_5,
         MIGRATION_5_6,
         MIGRATION_6_7,
         MIGRATION_7_8,
         MIGRATION_8_9,
-        MIGRATION_9_10
+        MIGRATION_9_10,
+        MIGRATION_10_11
     )
 
 }

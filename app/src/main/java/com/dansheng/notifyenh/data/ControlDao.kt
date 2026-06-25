@@ -22,6 +22,9 @@ interface ControlDao {
     @Update
     suspend fun update(control: ControlEntity)
 
+    @Update
+    suspend fun updateAll(controls: List<ControlEntity>)
+
     @Delete
     suspend fun delete(control: ControlEntity)
 

@@ -10,7 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.ControlEntity
+import com.dansheng.notifyenh.data.ControlType
 
 @Composable
 fun ControlEditDialog(
@@ -37,15 +38,13 @@ fun ControlEditDialog(
     onConfirm: (ControlEntity) -> Unit
 ) {
     var name by remember { mutableStateOf(control?.name ?: "") }
-    var checkDnd by remember { mutableStateOf(control?.checkDnd ?: false) }
+    var controlType by remember { mutableStateOf(control?.controlType ?: ControlType.MANUAL) }
     var dndBehavior by remember { mutableIntStateOf(control?.dndBehavior ?: 0) }
-    var checkTime by remember { mutableStateOf(control?.checkTime ?: false) }
     var startTime by remember { mutableStateOf(control?.startTime ?: "00:00") }
     var endTime by remember { mutableStateOf(control?.endTime ?: "23:59") }
 
     var startTimeError by remember { mutableStateOf(false) }
     var endTimeError by remember { mutableStateOf(false) }
-
     val timeRegex = Regex("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
 
     val scrollState = rememberScrollState()
@@ -68,7 +67,7 @@ fun ControlEditDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedTextField(
                     value = name,
@@ -77,22 +76,60 @@ fun ControlEditDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                Text(
+                    text = "控制方式 (仅可选其一)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                // 手动控制选项
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { checkDnd = !checkDnd }
+                        .clickable { controlType = ControlType.MANUAL }
+                        .padding(vertical = 4.dp)
                 ) {
-                    Checkbox(checked = checkDnd, onCheckedChange = { checkDnd = it })
-                    Text(stringResource(R.string.check_dnd))
+                    RadioButton(
+                        selected = controlType == ControlType.MANUAL,
+                        onClick = { controlType = ControlType.MANUAL }
+                    )
+                    Column {
+                        Text(stringResource(R.string.manual_control))
+                        Text(
+                            text = "仅由列表开关控制是否启用",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
                 }
 
-                if (checkDnd) {
-                    Column(modifier = Modifier.padding(start = 32.dp)) {
+                // 勿扰模式选项
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { controlType = ControlType.DND }
+                        .padding(vertical = 4.dp)
+                ) {
+                    RadioButton(
+                        selected = controlType == ControlType.DND,
+                        onClick = { controlType = ControlType.DND }
+                    )
+                    Column {
+                        Text(stringResource(R.string.check_dnd))
                         Text(
-                            stringResource(R.string.dnd_behavior),
-                            style = MaterialTheme.typography.labelMedium
+                            text = "根据系统勿扰模式状态决定行为",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
                         )
+                    }
+                }
+
+                if (controlType == ControlType.DND) {
+                    Column(modifier = Modifier.padding(start = 32.dp, bottom = 8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(selected = dndBehavior == 0, onClick = { dndBehavior = 0 })
                             Text(stringResource(R.string.dnd_not_execute))
@@ -104,17 +141,29 @@ fun ControlEditDialog(
                     }
                 }
 
+                // 时间段控制选项
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { checkTime = !checkTime }
+                        .clickable { controlType = ControlType.TIME }
+                        .padding(vertical = 4.dp)
                 ) {
-                    Checkbox(checked = checkTime, onCheckedChange = { checkTime = it })
-                    Text(stringResource(R.string.time_control))
+                    RadioButton(
+                        selected = controlType == ControlType.TIME,
+                        onClick = { controlType = ControlType.TIME }
+                    )
+                    Column {
+                        Text(stringResource(R.string.time_control))
+                        Text(
+                            text = "在特定时间范围内允许执行",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
                 }
 
-                if (checkTime) {
+                if (controlType == ControlType.TIME) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -130,14 +179,6 @@ fun ControlEditDialog(
                             label = { Text(stringResource(R.string.start_time)) },
                             placeholder = { Text("00:00") },
                             isError = startTimeError,
-                            supportingText = {
-                                if (startTimeError) {
-                                    Text(
-                                        stringResource(R.string.invalid_time_format),
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            },
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
@@ -149,15 +190,15 @@ fun ControlEditDialog(
                             label = { Text(stringResource(R.string.end_time)) },
                             placeholder = { Text("23:59") },
                             isError = endTimeError,
-                            supportingText = {
-                                if (endTimeError) {
-                                    Text(
-                                        stringResource(R.string.invalid_time_format),
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            },
                             modifier = Modifier.weight(1f)
+                        )
+                    }
+                    if (startTimeError || endTimeError) {
+                        Text(
+                            text = stringResource(R.string.invalid_time_format),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(start = 32.dp)
                         )
                     }
                 }
@@ -165,7 +206,9 @@ fun ControlEditDialog(
         },
         confirmButton = {
             val isTimeValid =
-                !checkTime || (timeRegex.matches(startTime) && timeRegex.matches(endTime))
+                controlType != ControlType.TIME || (!startTimeError && !endTimeError && timeRegex.matches(
+                    startTime
+                ) && timeRegex.matches(endTime))
             Button(
                 onClick = {
                     onConfirm(
@@ -173,9 +216,8 @@ fun ControlEditDialog(
                             id = control?.id ?: 0,
                             name = name,
                             isEnabled = control?.isEnabled ?: true,
-                            checkDnd = checkDnd,
+                            controlType = controlType,
                             dndBehavior = dndBehavior,
-                            checkTime = checkTime,
                             startTime = startTime,
                             endTime = endTime,
                             sortOrder = control?.sortOrder ?: 0
