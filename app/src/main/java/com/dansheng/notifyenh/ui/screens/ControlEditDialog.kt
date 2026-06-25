@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,10 +38,15 @@ fun ControlEditDialog(
 ) {
     var name by remember { mutableStateOf(control?.name ?: "") }
     var checkDnd by remember { mutableStateOf(control?.checkDnd ?: false) }
-    var dndBehavior by remember { mutableStateOf(control?.dndBehavior ?: 0) }
+    var dndBehavior by remember { mutableIntStateOf(control?.dndBehavior ?: 0) }
     var checkTime by remember { mutableStateOf(control?.checkTime ?: false) }
     var startTime by remember { mutableStateOf(control?.startTime ?: "00:00") }
     var endTime by remember { mutableStateOf(control?.endTime ?: "23:59") }
+
+    var startTimeError by remember { mutableStateOf(false) }
+    var endTimeError by remember { mutableStateOf(false) }
+
+    val timeRegex = Regex("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
 
     val scrollState = rememberScrollState()
 
@@ -117,14 +123,40 @@ fun ControlEditDialog(
                     ) {
                         OutlinedTextField(
                             value = startTime,
-                            onValueChange = { startTime = it },
+                            onValueChange = {
+                                startTime = it
+                                startTimeError = !timeRegex.matches(it)
+                            },
                             label = { Text(stringResource(R.string.start_time)) },
+                            placeholder = { Text("00:00") },
+                            isError = startTimeError,
+                            supportingText = {
+                                if (startTimeError) {
+                                    Text(
+                                        stringResource(R.string.invalid_time_format),
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = endTime,
-                            onValueChange = { endTime = it },
+                            onValueChange = {
+                                endTime = it
+                                endTimeError = !timeRegex.matches(it)
+                            },
                             label = { Text(stringResource(R.string.end_time)) },
+                            placeholder = { Text("23:59") },
+                            isError = endTimeError,
+                            supportingText = {
+                                if (endTimeError) {
+                                    Text(
+                                        stringResource(R.string.invalid_time_format),
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -132,6 +164,8 @@ fun ControlEditDialog(
             }
         },
         confirmButton = {
+            val isTimeValid =
+                !checkTime || (timeRegex.matches(startTime) && timeRegex.matches(endTime))
             Button(
                 onClick = {
                     onConfirm(
@@ -148,7 +182,7 @@ fun ControlEditDialog(
                         )
                     )
                 },
-                enabled = name.isNotBlank()
+                enabled = name.isNotBlank() && isTimeValid
             ) {
                 Text(stringResource(R.string.confirm))
             }

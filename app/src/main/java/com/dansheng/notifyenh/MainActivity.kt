@@ -138,7 +138,7 @@ fun NotifyEnhApp(appPreferences: AppPreferences) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-                beyondViewportPageCount = 1
+                beyondViewportPageCount = 3
             ) { page ->
                 when (destinations[page]) {
                     AppDestinations.HOME -> NotificationListScreen()

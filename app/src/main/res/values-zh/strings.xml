@@ -92,6 +92,7 @@
     <string name="start_time">开始时间</string>
     <string name="end_time">结束时间</string>
     <string name="bind_controls">绑定控制</string>
+    <string name="invalid_time_format">时间格式错误 (HH:mm)</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">设置</string>

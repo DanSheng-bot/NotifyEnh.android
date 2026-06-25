@@ -92,6 +92,7 @@
     <string name="start_time">Start Time</string>
     <string name="end_time">End Time</string>
     <string name="bind_controls">Bind Controls</string>
+    <string name="invalid_time_format">Invalid time format (HH:mm)</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>

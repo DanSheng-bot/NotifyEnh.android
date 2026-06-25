@@ -19,6 +19,7 @@ import com.dansheng.notifyenh.App.Companion.NOTIFICATION_ID
 import com.dansheng.notifyenh.MainActivity
 import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
+import com.dansheng.notifyenh.data.ControlEntity
 import com.dansheng.notifyenh.data.NotificationEntity
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.data.prefs.AppPreferences
@@ -123,6 +124,7 @@ class NotifyEnhService : NotificationListenerService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private lateinit var database: AppDatabase
     private lateinit var appPreferences: AppPreferences
+    private lateinit var notificationManager: NotificationManager
     private var wakeLock: PowerManager.WakeLock? = null
 
     // 内存中的通知查重缓存，Key: pkg|title|content, Value: postTime
@@ -179,6 +181,7 @@ class NotifyEnhService : NotificationListenerService() {
         super.onCreate()
         database = AppDatabase.getDatabase(this)
         appPreferences = AppPreferences(this)
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         val powerManager = getSystemService(POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(
@@ -217,7 +220,9 @@ class NotifyEnhService : NotificationListenerService() {
         // 存入数据库及处理任务
         serviceScope.launch {
             // 1. 先匹配任务，获取触发规则
-            val triggeredTask = findTriggeredTask(sbn, title, content)
+            val result = findTriggeredTask(sbn, title, content)
+            val triggeredTask = result?.first
+            val boundControls = result?.second ?: emptyList()
 
             if (triggeredTask != null) {
                 val notifyDelay = System.currentTimeMillis() - postTime
@@ -269,22 +274,21 @@ class NotifyEnhService : NotificationListenerService() {
 
             // 5. 执行剩余操作 (TTS, 响铃)
             triggeredTask?.let {
-                handleRemainingActions(it, title, content)
+                handleRemainingActions(it, title, content, boundControls)
             }
         }
     }
 
-    private suspend fun handleRemainingActions(
+    private fun handleRemainingActions(
         task: TaskEntity,
         title: String,
-        content: String
+        content: String,
+        controls: List<ControlEntity>
     ) {
         // 检查是否有控制显式允许在勿扰模式下执行
-        val controls = database.controlDao().getControlsForTaskList(task.id)
         val isExplicitlyAllowedInDnd = controls.any { it.checkDnd && it.dndBehavior == 1 }
 
         if (!isExplicitlyAllowedInDnd) {
-            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             if (notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL) {
                 LogUtils.d("免打扰开启中且未通过控制显式允许, 跳过 TTS/Alarm for: $title")
                 return
@@ -317,50 +321,42 @@ class NotifyEnhService : NotificationListenerService() {
         sbn: StatusBarNotification,
         title: String,
         content: String
-    ): TaskEntity? {
+    ): Pair<TaskEntity, List<ControlEntity>>? {
         val enabledTasks = database.taskDao().getEnabledTasksForPackage(sbn.packageName)
         for (task in enabledTasks) {
             if (isMatch(task, title, content)) {
-                if (checkControls(task)) {
-                    return task
+                val controls = database.controlDao().getControlsForTaskList(task.id)
+                if (checkControls(controls)) {
+                    return task to controls
                 }
             }
         }
         return null
     }
 
-    private suspend fun checkControls(task: TaskEntity): Boolean {
-        val controls = database.controlDao().getControlsForTaskList(task.id)
+    private fun checkControls(controls: List<ControlEntity>): Boolean {
+        val enabledControls = controls.filter { it.isEnabled }
+        if (enabledControls.isEmpty()) return true
 
-        // If no controls bound, fallback to default DND check for TTS/Alarm
-        if (controls.isEmpty()) {
-            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            if (notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL) {
-                // If it's a DND and task has TTS or Alarm, we should probably still allow Cancel action?
-                // The original code skipped TTS/Alarm in handleRemainingActions but findTriggeredTask still returned the task.
-                // So actionCancel still happened.
-                return true
-            }
-            return true
-        }
-
-        for (control in controls) {
-            if (!control.isEnabled) return false
-
-            if (control.checkDnd) {
-                val notificationManager =
-                    getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                val isDnd =
-                    notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
-                if (isDnd && control.dndBehavior == 0) return false
-            }
-
-            if (control.checkTime) {
-                if (!isNowInTimeRange(control.startTime, control.endTime)) {
-                    return false
-                }
+        // 1. 勿扰模式控制：必须全部通过 (AND 逻辑)
+        val dndControls = enabledControls.filter { it.checkDnd }
+        for (control in dndControls) {
+            val isDnd =
+                notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
+            if (isDnd && control.dndBehavior == 0) {
+                return false
             }
         }
+
+        // 2. 时间段控制：满足其中一个即可 (OR 逻辑)
+        val timeControls = enabledControls.filter { it.checkTime }
+        if (timeControls.isNotEmpty()) {
+            val anyTimeMatch = timeControls.any { isNowInTimeRange(it.startTime, it.endTime) }
+            if (!anyTimeMatch) {
+                return false
+            }
+        }
+
         return true
     }
 
