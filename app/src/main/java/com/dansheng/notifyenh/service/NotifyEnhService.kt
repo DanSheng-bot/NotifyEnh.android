@@ -130,6 +130,7 @@ class NotifyEnhService : NotificationListenerService() {
 
     // 内存中的通知查重缓存，Key: pkg|title|content, Value: postTime
     private val notificationCache = ConcurrentHashMap<String, Long>()
+    private val regexCache = ConcurrentHashMap<String, Regex>()
     private var lastCleanupTime = 0L
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -337,24 +338,23 @@ class NotifyEnhService : NotificationListenerService() {
     }
 
     private fun checkControls(controls: List<ControlEntity>): Boolean {
-        val enabledControls = controls.filter { it.isEnabled }
-        if (enabledControls.isEmpty()) return true
-
-        // 1. 勿扰模式控制：必须全部通过 (AND 逻辑)
-        val dndControls = enabledControls.filter { it.controlType == ControlType.DND }
-        for (control in dndControls) {
-            val isDnd =
-                notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
-            if (isDnd && control.dndBehavior == 0) {
-                return false
-            }
+        // 1. 手动控制判定：只要有一个手动控制是关闭的，就拦截 (AND 逻辑)
+        if (controls.any { it.controlType == ControlType.MANUAL && !it.isEnabled }) {
+            return false
         }
 
-        // 2. 时间段控制：满足其中一个即可 (OR 逻辑)
-        val timeControls = enabledControls.filter { it.controlType == ControlType.TIME }
+        // 2. 勿扰模式控制：必须全部通过 (AND 逻辑)
+        val dndControls = controls.filter { it.controlType == ControlType.DND }
+        val isDndActive =
+            notificationManager.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
+        if (isDndActive && dndControls.any { it.dndBehavior == 0 }) {
+            return false
+        }
+
+        // 3. 时间段控制：满足其中一个即可 (OR 逻辑)
+        val timeControls = controls.filter { it.controlType == ControlType.TIME }
         if (timeControls.isNotEmpty()) {
-            val anyTimeMatch = timeControls.any { isNowInTimeRange(it.startTime, it.endTime) }
-            if (!anyTimeMatch) {
+            if (timeControls.none { isNowInTimeRange(it.startTime, it.endTime) }) {
                 return false
             }
         }
@@ -426,7 +426,10 @@ class NotifyEnhService : NotificationListenerService() {
     private fun checkPattern(pattern: String, text: String, isRegex: Boolean): Boolean {
         return try {
             if (isRegex) {
-                Regex(pattern, RegexOption.IGNORE_CASE).containsMatchIn(text)
+                val regex = regexCache.getOrPut(pattern) {
+                    Regex(pattern, RegexOption.IGNORE_CASE)
+                }
+                regex.containsMatchIn(text)
             } else {
                 text.contains(pattern, ignoreCase = true)
             }
