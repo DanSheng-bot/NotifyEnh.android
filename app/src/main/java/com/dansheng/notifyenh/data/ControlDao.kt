@@ -40,9 +40,9 @@ interface ControlDao {
     @Query("DELETE FROM task_control_cross_ref WHERE controlId = :controlId")
     suspend fun deleteByControlId(controlId: Long)
 
-    @Query("SELECT * FROM controls INNER JOIN task_control_cross_ref ON controls.id = task_control_cross_ref.controlId WHERE task_control_cross_ref.taskId = :taskId")
+    @Query("SELECT controls.* FROM controls INNER JOIN task_control_cross_ref ON controls.id = task_control_cross_ref.controlId WHERE task_control_cross_ref.taskId = :taskId")
     fun getControlsForTask(taskId: Long): Flow<List<ControlEntity>>
 
-    @Query("SELECT * FROM controls INNER JOIN task_control_cross_ref ON controls.id = task_control_cross_ref.controlId WHERE task_control_cross_ref.taskId = :taskId")
+    @Query("SELECT controls.* FROM controls INNER JOIN task_control_cross_ref ON controls.id = task_control_cross_ref.controlId WHERE task_control_cross_ref.taskId = :taskId")
     suspend fun getControlsForTaskList(taskId: Long): List<ControlEntity>
 }

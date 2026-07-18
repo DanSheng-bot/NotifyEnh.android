@@ -7,7 +7,8 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [NotificationEntity::class, TaskEntity::class, LogEntity::class, ControlEntity::class, TaskControlCrossRef::class],
-    version = 12
+    version = 12,
+    exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao

@@ -19,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dansheng.notifyenh.R
@@ -53,8 +52,9 @@ fun ChangelogDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(R.string.changelog),
-                style = MaterialTheme.typography.headlineSmall
+                text = "关注公众号(开源阅读)",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
             )
         },
         text = {
@@ -63,15 +63,6 @@ fun ChangelogDialog(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    Text(
-                        text = "关注公众号(开源阅读)获取软件更新",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
                 if (changelogText.isNotEmpty()) {
                     MarkdownText(
                         markdown = changelogText,
