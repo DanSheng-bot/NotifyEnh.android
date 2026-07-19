@@ -71,7 +71,10 @@ androidComponents {
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
+    val bom = platform(libs.androidx.compose.bom)
+    listOf("implementation", "androidTestImplementation", "debugImplementation").forEach {
+        add(it, bom)
+    }
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.icons.core)
