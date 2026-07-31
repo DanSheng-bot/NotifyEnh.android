@@ -71,7 +71,10 @@ androidComponents {
 }
 
 dependencies {
-    implementation(platform(libs.androidx.compose.bom))
+    val bom = platform(libs.androidx.compose.bom)
+    listOf("implementation", "androidTestImplementation", "debugImplementation").forEach {
+        add(it, bom)
+    }
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.icons.core)
@@ -94,7 +97,6 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.reorderable)
     testImplementation(libs.junit)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)

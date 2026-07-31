@@ -92,6 +92,12 @@ object DbMigrations {
         }
     }
 
+    private val MIGRATION_12_13 = object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_task_control_cross_ref_controlId` ON `task_control_cross_ref` (`controlId`)")
+        }
+    }
+
     val MIGRATIONS = arrayOf(
         MIGRATION_4_5,
         MIGRATION_5_6,
@@ -100,7 +106,8 @@ object DbMigrations {
         MIGRATION_8_9,
         MIGRATION_9_10,
         MIGRATION_10_11,
-        MIGRATION_11_12
+        MIGRATION_11_12,
+        MIGRATION_12_13
     )
 
 }
