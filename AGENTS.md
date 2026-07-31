@@ -1,0 +1,1 @@
+All responses and explanations must be provided in Simplified Chinese.
