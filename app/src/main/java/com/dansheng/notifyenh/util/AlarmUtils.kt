@@ -46,9 +46,13 @@ object AlarmUtils {
     val alarmMsgList: StateFlow<PersistentList<String>> = _alarmMsgList.asStateFlow()
 
     const val ACTION_STOP_ALARM = "com.dansheng.notifyenh.ACTION_STOP_ALARM"
+    const val ACTION_STOP_AND_OPEN_APP = "com.dansheng.notifyenh.ACTION_STOP_AND_OPEN_APP"
+    const val EXTRA_PACKAGE_NAME = "extra_package_name"
 
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmTaskId: Long? = null
+    private val _currentAlarmPackageName = MutableStateFlow<String?>(null)
+    val currentAlarmPackageName: StateFlow<String?> = _currentAlarmPackageName.asStateFlow()
 
     /**
      * 音量键按下广播接收器
@@ -89,8 +93,9 @@ object AlarmUtils {
 
     fun startAlarm(taskEntity: TaskEntity) {
         currentAlarmTaskId = taskEntity.id
+        _currentAlarmPackageName.value = taskEntity.packageName
         if (!_alarmMsgList.value.contains(taskEntity.name)) {
-            _alarmMsgList.value = _alarmMsgList.value.add(taskEntity.name)
+            _alarmMsgList.value = _alarmMsgList.value.adding(taskEntity.name)
         }
         LogUtils.d("Starting alarm for task: ${taskEntity.name}")
         _isAlarmRinging.value = true
@@ -157,8 +162,9 @@ object AlarmUtils {
         vibrator.cancel()
 
         if (isUserDismissed) {
-            _alarmMsgList.value = _alarmMsgList.value.clear()
+            _alarmMsgList.value = _alarmMsgList.value.cleared()
             currentAlarmTaskId = null
+            _currentAlarmPackageName.value = null
             mainHandler.removeCallbacks(snoozeRunnable)
             mainHandler.removeCallbacks(timeoutRunnable)
             val manager = App.instance.getSystemService(NotificationManager::class.java)
@@ -192,7 +198,7 @@ object AlarmUtils {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val notification = NotificationCompat.Builder(App.instance, ALARM_CHANNEL_ID)
+        val builder = NotificationCompat.Builder(App.instance, ALARM_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(App.instance.getString(R.string.alarm_title))
             .setContentText(
@@ -211,7 +217,26 @@ object AlarmUtils {
                 App.instance.getString(R.string.stop_alarm),
                 stopPendingIntent
             )
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+
+        currentAlarmPackageName.value?.let { pkg ->
+            val openIntent = Intent(App.instance, NotifyEnhService::class.java).apply {
+                action = ACTION_STOP_AND_OPEN_APP
+                putExtra(EXTRA_PACKAGE_NAME, pkg)
+            }
+            val openPendingIntent = PendingIntent.getService(
+                App.instance,
+                1,
+                openIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            builder.addAction(
+                R.drawable.ic_notification,
+                App.instance.getString(R.string.open_trigger_app),
+                openPendingIntent
+            )
+        }
+
+        val notification = builder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
 
         val manager = App.instance.getSystemService(NotificationManager::class.java)

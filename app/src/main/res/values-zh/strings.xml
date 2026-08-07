@@ -23,6 +23,7 @@
     <string name="back_to_top">回到顶部</string>
     <string name="task_triggered">已触发任务</string>
     <string name="open_apk">打开应用</string>
+    <string name="open_trigger_app">打开通知应用</string>
     <string name="create_task">创建任务</string>
     <string name="delete_record">删除记录</string>
     <string name="view_later">稍后查看</string>

@@ -57,9 +57,13 @@ class AlarmActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.errorContainer
                 ) {
+                    val packageName by AlarmUtils.currentAlarmPackageName.collectAsState()
                     AlarmContent(
                         onStop = {
                             stopAlarm()
+                        },
+                        onOpenApp = packageName?.let {
+                            { stopAndOpenApp(it) }
                         }
                     )
                 }
@@ -77,7 +81,16 @@ class AlarmActivity : ComponentActivity() {
 
     private fun stopAlarm() {
         val intent = Intent(this, NotifyEnhService::class.java).apply {
-            action = "com.dansheng.notifyenh.ACTION_STOP_ALARM"
+            action = AlarmUtils.ACTION_STOP_ALARM
+        }
+        startService(intent)
+        finish()
+    }
+
+    private fun stopAndOpenApp(packageName: String) {
+        val intent = Intent(this, NotifyEnhService::class.java).apply {
+            action = AlarmUtils.ACTION_STOP_AND_OPEN_APP
+            putExtra(AlarmUtils.EXTRA_PACKAGE_NAME, packageName)
         }
         startService(intent)
         finish()
@@ -94,7 +107,7 @@ class AlarmActivity : ComponentActivity() {
 }
 
 @Composable
-fun AlarmContent(onStop: () -> Unit) {
+fun AlarmContent(onStop: () -> Unit, onOpenApp: (() -> Unit)? = null) {
     val alarmMsgList by AlarmUtils.alarmMsgList.collectAsState()
 
     Column(
@@ -130,6 +143,24 @@ fun AlarmContent(onStop: () -> Unit) {
         )
 
         Spacer(modifier = Modifier.height(64.dp))
+
+        onOpenApp?.let {
+            Button(
+                onClick = it,
+                modifier = Modifier
+                    .size(width = 200.dp, height = 80.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Text(
+                    text = stringResource(R.string.open_trigger_app),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         Button(
             onClick = onStop,

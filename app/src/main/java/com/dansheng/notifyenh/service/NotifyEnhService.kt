@@ -143,8 +143,25 @@ class NotifyEnhService : NotificationListenerService() {
             AlarmUtils.ACTION_STOP_ALARM -> {
                 AlarmUtils.stopAlarm(isUserDismissed = true)
             }
+            AlarmUtils.ACTION_STOP_AND_OPEN_APP -> {
+                val pkg = intent.getStringExtra(AlarmUtils.EXTRA_PACKAGE_NAME)
+                AlarmUtils.stopAlarm(isUserDismissed = true)
+                pkg?.let { openApp(it) }
+            }
         }
         return START_STICKY
+    }
+
+    private fun openApp(packageName: String) {
+        try {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            launchIntent?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(this)
+            }
+        } catch (e: Exception) {
+            LogUtils.e("Failed to open app: $packageName", e)
+        }
     }
 
     override fun onListenerConnected() {
