@@ -24,17 +24,12 @@ fun getVersionName(): String {
 
 android {
     namespace = "com.dansheng.notifyenh"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.dansheng.notifyenh"
         minSdk = 30
-        //noinspection OldTargetApi
-        targetSdk = 36
+        targetSdk = 37
         versionCode = getGitCommitCount()
         versionName = getVersionName()
 
