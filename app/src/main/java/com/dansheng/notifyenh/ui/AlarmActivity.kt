@@ -33,7 +33,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dansheng.notifyenh.R
-import com.dansheng.notifyenh.service.NotifyEnhService
 import com.dansheng.notifyenh.ui.theme.NotifyEnhTheme
 import com.dansheng.notifyenh.util.AlarmUtils
 
@@ -42,6 +41,7 @@ class AlarmActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d("AlarmActivity", "onCreate")
         turnScreenOnAndKeyguardOff()
+        handleIntent(intent)
 
         setContent {
             NotifyEnhTheme {
@@ -71,6 +71,19 @@ class AlarmActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.action == AlarmUtils.ACTION_STOP_AND_OPEN_APP) {
+            val pkg = intent.getStringExtra(AlarmUtils.EXTRA_PACKAGE_NAME)
+            pkg?.let { stopAndOpenApp(it) }
+        }
+    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
             stopAlarm()
@@ -80,19 +93,21 @@ class AlarmActivity : ComponentActivity() {
     }
 
     private fun stopAlarm() {
-        val intent = Intent(this, NotifyEnhService::class.java).apply {
-            action = AlarmUtils.ACTION_STOP_ALARM
-        }
-        startService(intent)
+        AlarmUtils.stopAlarm(isUserDismissed = true)
         finish()
     }
 
     private fun stopAndOpenApp(packageName: String) {
-        val intent = Intent(this, NotifyEnhService::class.java).apply {
-            action = AlarmUtils.ACTION_STOP_AND_OPEN_APP
-            putExtra(AlarmUtils.EXTRA_PACKAGE_NAME, packageName)
+        AlarmUtils.stopAlarm(isUserDismissed = true)
+        try {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            launchIntent?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(this)
+            }
+        } catch (e: Exception) {
+            Log.e("AlarmActivity", "Failed to open app: $packageName", e)
         }
-        startService(intent)
         finish()
     }
 

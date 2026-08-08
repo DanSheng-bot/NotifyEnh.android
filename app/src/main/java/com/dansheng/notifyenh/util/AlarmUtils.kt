@@ -24,6 +24,7 @@ import com.dansheng.notifyenh.R
 import com.dansheng.notifyenh.data.AppDatabase
 import com.dansheng.notifyenh.data.TaskEntity
 import com.dansheng.notifyenh.service.NotifyEnhService
+import com.dansheng.notifyenh.ui.AlarmActivity
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
@@ -188,7 +189,7 @@ object AlarmUtils {
         )
 
         val fullScreenIntent =
-            Intent(App.instance, com.dansheng.notifyenh.ui.AlarmActivity::class.java).apply {
+            Intent(App.instance, AlarmActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
             }
         val fullScreenPendingIntent = PendingIntent.getActivity(
@@ -219,11 +220,13 @@ object AlarmUtils {
             )
 
         currentAlarmPackageName.value?.let { pkg ->
-            val openIntent = Intent(App.instance, NotifyEnhService::class.java).apply {
-                action = ACTION_STOP_AND_OPEN_APP
-                putExtra(EXTRA_PACKAGE_NAME, pkg)
-            }
-            val openPendingIntent = PendingIntent.getService(
+            val openIntent =
+                Intent(App.instance, AlarmActivity::class.java).apply {
+                    action = ACTION_STOP_AND_OPEN_APP
+                    putExtra(EXTRA_PACKAGE_NAME, pkg)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+            val openPendingIntent = PendingIntent.getActivity(
                 App.instance,
                 1,
                 openIntent,
