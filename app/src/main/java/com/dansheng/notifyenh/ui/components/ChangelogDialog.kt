@@ -1,5 +1,6 @@
 package com.dansheng.notifyenh.ui.components
 
+import android.text.util.Linkify
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -66,6 +67,7 @@ fun ChangelogDialog(
                 if (changelogText.isNotEmpty()) {
                     MarkdownText(
                         markdown = changelogText,
+                        linkifyMask = Linkify.WEB_URLS,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface
                         )
