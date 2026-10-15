@@ -45,10 +45,10 @@ class AlarmActivity : ComponentActivity() {
 
         setContent {
             NotifyEnhTheme {
-                val isRinging by AlarmUtils.isAlarmRinging.collectAsState()
+                val alarmMsgList by AlarmUtils.alarmMsgList.collectAsState()
 
-                LaunchedEffect(isRinging) {
-                    if (!isRinging) {
+                LaunchedEffect(alarmMsgList) {
+                    if (alarmMsgList.isEmpty()) {
                         finish()
                     }
                 }
